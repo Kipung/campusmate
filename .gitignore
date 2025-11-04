@@ -1,0 +1,78 @@
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+coverage/
+generated_plugin_registrant.dart
+
+# Android
+*.iml
+.gradle/
+local.properties
+**/android/app/debug
+**/android/app/profile
+**/android/app/release
+
+# iOS / macOS
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/.symlinks/
+ios/Pods/
+ios/Runner.xcworkspace/
+macos/Flutter/Flutter.podspec
+macos/Pods/
+macos/Runner.xcworkspace/
+*.xcuserstate
+*.xcuserdata/
+
+# Windows
+windows/flutter/ephemeral/
+windows/build/
+*.pdb
+
+# Linux
+linux/flutter/ephemeral/
+linux/build/
+
+# Web
+web/.dart_tool/
+web/build/
+
+# VSCode / IntelliJ / Xcode / Android Studio
+.vscode/
+.idea/
+*.ipr
+*.iws
+*.iml
+*.swp
+*.DS_Store
+*.sublime-workspace
+*.sublime-project
+
+# Environment / Keys / Logs
+.env
+.env.*
+*.log
+*.lock
+*.keystore
+*.jks
+*.pem
+*.p12
+
+# Platform-specific binaries
+*.exe
+*.dll
+*.so
+*.dylib
+*.apk
+*.aab
+*.ipa
+
+# Other
+coverage/
+pubspec.lock
+firebase_app_id_file.json
