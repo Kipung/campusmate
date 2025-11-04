@@ -23,9 +23,13 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
-    - assets/data/
+    # Note: assets/data/ was removed because the directory or files were not
+    # present in the repository. Add it back here only after creating
+    # `assets/data/` and placing files inside.
 
-  fonts:
-    - family: MyCustomFont
-      fonts:
-        - asset: assets/fonts/MyCustomFont-Regular.ttf
+  # If you intend to use a custom font, re-add the `fonts:` section and
+  # point to the actual font files inside `assets/fonts/`. For example:
+  # fonts:
+  #   - family: MyCustomFont
+  #     fonts:
+  #       - asset: assets/fonts/MyCustomFont-Regular.ttf
