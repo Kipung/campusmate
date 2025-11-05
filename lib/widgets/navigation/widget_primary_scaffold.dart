@@ -40,7 +40,8 @@ class WidgetPrimaryScaffold extends ConsumerStatefulWidget {
 
   @override
   // ignore: library_private_types_in_public_api
-  ConsumerState<WidgetPrimaryScaffold> createState() => _WidgetPrimaryScaffoldState();
+  ConsumerState<WidgetPrimaryScaffold> createState() =>
+      _WidgetPrimaryScaffoldState();
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -92,15 +93,33 @@ class _WidgetPrimaryScaffoldState extends ConsumerState<WidgetPrimaryScaffold> {
       // Edit-style options
       //////////////////////////////////////////////////////////
       PopupMenuItem(
-        child: Row(children: [Icon(Icons.share, size: 25), SizedBox(width: 10), Text("Share")]),
+        child: Row(
+          children: [
+            Icon(Icons.share, size: 25),
+            SizedBox(width: 10),
+            Text("Share"),
+          ],
+        ),
         value: "Share",
       ),
       PopupMenuItem(
-        child: Row(children: [Icon(Icons.edit, size: 25), SizedBox(width: 10), Text("Rename")]),
+        child: Row(
+          children: [
+            Icon(Icons.edit, size: 25),
+            SizedBox(width: 10),
+            Text("Rename"),
+          ],
+        ),
         value: "Rename",
       ),
       PopupMenuItem(
-        child: Row(children: [Icon(Icons.delete, size: 25), SizedBox(width: 10), Text("Delete")]),
+        child: Row(
+          children: [
+            Icon(Icons.delete, size: 25),
+            SizedBox(width: 10),
+            Text("Delete"),
+          ],
+        ),
         value: "Delete",
       ),
     ];
@@ -160,21 +179,49 @@ class _WidgetPrimaryScaffoldState extends ConsumerState<WidgetPrimaryScaffold> {
       ),
       drawer: WidgetAppDrawer(),
       body: _getScreenToDisplay(currentTabIndex),
+      // bottomNavigationBar: BottomNavigationBar(
+      //   currentIndex: currentTabIndex,
+      //   onTap: (index) {
+      //     ref.read(providerPrimaryBottomNavTabIndex.notifier).state = index;
+      //   },
+      //   items: [
+      //     BottomNavigationBarItem(
+      //       label: "Home",
+      //       activeIcon: Icon(FontAwesomeIcons.house),
+      //       icon: Icon(FontAwesomeIcons.house),
+      //     ),
+      //     BottomNavigationBarItem(
+      //       label: "Search",
+      //       activeIcon: Icon(FontAwesomeIcons.magnifyingGlass),
+      //       icon: Icon(FontAwesomeIcons.magnifyingGlass),
+      //     ),
+      //     BottomNavigationBarItem(
+      //       label: "Messages",
+      //       activeIcon: Icon(FontAwesomeIcons.envelope),
+      //       icon: Icon(FontAwesomeIcons.envelope),
+      //     ),
+      //     BottomNavigationBarItem(
+      //       label: "Profile",
+      //       activeIcon: Icon(FontAwesomeIcons.envelope),
+      //       icon: Icon(FontAwesomeIcons.envelope),
+      //     ),
+      //   ],
+      // ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: currentTabIndex,
         onTap: (index) {
           ref.read(providerPrimaryBottomNavTabIndex.notifier).state = index;
         },
-        items: [
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: Theme.of(context).colorScheme.primary,
+        unselectedItemColor: Colors.grey,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
+          BottomNavigationBarItem(icon: Icon(Icons.groups), label: 'Groups'),
           BottomNavigationBarItem(
-            label: "Home",
-            activeIcon: Icon(FontAwesomeIcons.house),
-            icon: Icon(FontAwesomeIcons.house),
-          ),
-          BottomNavigationBarItem(
-            label: "Alternate",
-            activeIcon: Icon(FontAwesomeIcons.building),
-            icon: Icon(FontAwesomeIcons.building),
+            icon: Icon(Icons.chat_bubble),
+            label: 'Messages',
           ),
         ],
       ),

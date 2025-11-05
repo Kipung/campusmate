@@ -40,6 +40,7 @@ flutter:
     - assets/images/
     - assets/icons/
     - assets/animations/
+    - assets/
     # Note: assets/data/ was removed because the directory or files were not
     # present in the repository. Add it back here only after creating
     # `assets/data/` and placing files inside.
