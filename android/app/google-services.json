@@ -20,7 +20,7 @@
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyCZzTxzb6tACMwR7AptzCtW1_Z0nAokcXU"
+          "current_key": "AIzaSyBydBOWcK5sFw9qcOY9civZhxXC6-_19_M"
         }
       ],
       "services": {
@@ -29,6 +29,13 @@
             {
               "client_id": "389441895583-bibkgj79hq0lsg0elht0fs1sumu04dj4.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "389441895583-e2h912a33fg6cl7icsnhq4882qup1ouv.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.campusmate"
+              }
             }
           ]
         }
