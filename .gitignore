@@ -76,3 +76,5 @@ web/build/
 coverage/
 pubspec.lock
 firebase_app_id_file.json
+
+lib/firebase_options.dart
