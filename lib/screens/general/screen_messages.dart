@@ -21,11 +21,14 @@ import 'package:flutter/material.dart';
 // App relative file imports
 import '../../util/message_display/snackbar.dart';
 
+import '../../widgets/general/dm_box.dart';
+
 //////////////////////////////////////////////////////////////////////////
 // StateFUL widget which manages state. Simply initializes the state object.
 //////////////////////////////////////////////////////////////////////////
 class ScreenMessages extends ConsumerStatefulWidget {
   static const routeName = '/messages';
+  const ScreenMessages({super.key});
 
   @override
   ConsumerState<ScreenMessages> createState() => _ScreenMessagesState();
@@ -66,19 +69,38 @@ class _ScreenMessagesState extends ConsumerState<ScreenMessages> {
   //////////////////////////////////////////////////////////////////////////
   @override
   Widget build(BuildContext context) {
-    // Return the scaffold
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        shape: ShapeBorder.lerp(CircleBorder(), StadiumBorder(), 0.5),
-        onPressed: () => Snackbar.show(
-          SnackbarDisplayType.SB_INFO,
-          'You clicked the floating button on the Messages screen!',
-          context,
+      backgroundColor: Color(int.parse('0xFFD5C7AD')),
+      appBar: AppBar(
+        backgroundColor: Color(int.parse('0xFFBEC5A4')),
+        title: SizedBox(
+          height: MediaQuery.of(context).size.height * 0.05,
+          width: MediaQuery.of(context).size.width * 0.7,
+          child: TextField(
+            decoration: InputDecoration(
+              hintText: 'Search DMs',
+              filled: true,
+              fillColor: Color(int.parse('0xFF99A07F')),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10.0),
+                borderSide: BorderSide.none,
+              ),
+              hintStyle: TextStyle(color: Colors.white),
+              contentPadding: EdgeInsets.symmetric(
+                vertical: 8.0,
+                horizontal: 12.0,
+              ),
+            ),
+            style: TextStyle(color: Colors.white),
+          ),
         ),
-        splashColor: Theme.of(context).primaryColor,
-        child: Icon(FontAwesomeIcons.plus),
       ),
-      body: Center(child: Text('Messages')),
+      body: ListView.builder(
+        itemCount: 20, // Example item count
+        itemBuilder: (context, index) {
+          return const DM_Box();
+        },
+      ),
     );
   }
 }
