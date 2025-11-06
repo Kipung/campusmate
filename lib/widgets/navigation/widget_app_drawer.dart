@@ -22,7 +22,12 @@ import '../general/widget_profile_avatar.dart';
 import '../../providers/provider_auth.dart';
 import '../../main.dart';
 
-enum BottomNavSelection { HOME_SCREEN, ALTERNATE_SCREEN }
+enum BottomNavSelection {
+  HOME_SCREEN,
+  SEARCH_SCREEN,
+  GROUPS_SCREEN,
+  MESSAGES_SCREEN,
+}
 
 //////////////////////////////////////////////////////////////////
 // StateLESS widget which only has data that is initialized when
@@ -39,7 +44,9 @@ class WidgetAppDrawer extends StatelessWidget {
       child: Consumer(
         builder: (BuildContext context, WidgetRef ref, Widget? child) {
           final ProviderAuth _providerAuth = ref.watch(providerAuth);
-          final ProviderUserProfile _providerUserProfile = ref.watch(providerUserProfile);
+          final ProviderUserProfile _providerUserProfile = ref.watch(
+            providerUserProfile,
+          );
 
           return Column(
             children: <Widget>[
@@ -60,7 +67,11 @@ class WidgetAppDrawer extends StatelessWidget {
                 automaticallyImplyLeading: false,
               ),
               // Divider(),
-              ListTile(leading: Icon(Icons.home), title: Text('Home'), onTap: () => Navigator.of(context).pop()),
+              ListTile(
+                leading: Icon(Icons.home),
+                title: Text('Home'),
+                onTap: () => Navigator.of(context).pop(),
+              ),
               Divider(),
               ListTile(
                 leading: Icon(Icons.settings),

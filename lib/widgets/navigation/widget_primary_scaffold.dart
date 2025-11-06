@@ -18,8 +18,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 // App relative file imports
-import '../../screens/general/screen_alternate.dart';
 import '../../screens/general/screen_home.dart';
+import '../../screens/general/screen_search.dart';
+import '../../screens/general/screen_groups.dart';
+import '../../screens/general/screen_messages.dart';
+
 import 'widget_primary_app_bar.dart';
 import 'widget_app_drawer.dart';
 import '../../main.dart';
@@ -132,8 +135,12 @@ class _WidgetPrimaryScaffoldState extends ConsumerState<WidgetPrimaryScaffold> {
   Widget _getScreenToDisplay(int currentTabIndex) {
     if (currentTabIndex == BottomNavSelection.HOME_SCREEN.index)
       return ScreenHome();
-    else if (currentTabIndex == BottomNavSelection.ALTERNATE_SCREEN.index)
-      return ScreenAlternate();
+    else if (currentTabIndex == BottomNavSelection.SEARCH_SCREEN.index)
+      return ScreenSearch();
+    else if (currentTabIndex == BottomNavSelection.GROUPS_SCREEN.index)
+      return ScreenGroups();
+    else if (currentTabIndex == BottomNavSelection.MESSAGES_SCREEN.index)
+      return ScreenMessages();
     else
       return ScreenHome();
   }
@@ -145,8 +152,14 @@ class _WidgetPrimaryScaffoldState extends ConsumerState<WidgetPrimaryScaffold> {
   Widget _getAppBarTitle(int currentTabIndex) {
     if (currentTabIndex == BottomNavSelection.HOME_SCREEN.index)
       return Text("Home");
+    else if (currentTabIndex == BottomNavSelection.SEARCH_SCREEN.index)
+      return Text("Search");
+    else if (currentTabIndex == BottomNavSelection.GROUPS_SCREEN.index)
+      return Text("Groups");
+    else if (currentTabIndex == BottomNavSelection.MESSAGES_SCREEN.index)
+      return Text("Messages");
     else
-      return Text("Alternate");
+      return ScreenHome();
   }
 
   ////////////////////////////////////////////////////////////////

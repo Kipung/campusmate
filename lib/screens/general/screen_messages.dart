@@ -24,17 +24,17 @@ import '../../util/message_display/snackbar.dart';
 //////////////////////////////////////////////////////////////////////////
 // StateFUL widget which manages state. Simply initializes the state object.
 //////////////////////////////////////////////////////////////////////////
-class ScreenAlternate extends ConsumerStatefulWidget {
-  static const routeName = '/alternative';
+class ScreenMessages extends ConsumerStatefulWidget {
+  static const routeName = '/messages';
 
   @override
-  ConsumerState<ScreenAlternate> createState() => _ScreenAlternateState();
+  ConsumerState<ScreenMessages> createState() => _ScreenMessagesState();
 }
 
 //////////////////////////////////////////////////////////////////////////
 // The actual STATE which is managed by the above widget.
 //////////////////////////////////////////////////////////////////////////
-class _ScreenAlternateState extends ConsumerState<ScreenAlternate> {
+class _ScreenMessagesState extends ConsumerState<ScreenMessages> {
   // The "instance variables" managed in this state
   bool _isInit = true;
 
@@ -72,13 +72,13 @@ class _ScreenAlternateState extends ConsumerState<ScreenAlternate> {
         shape: ShapeBorder.lerp(CircleBorder(), StadiumBorder(), 0.5),
         onPressed: () => Snackbar.show(
           SnackbarDisplayType.SB_INFO,
-          'You clicked the floating button on the alternate screen!',
+          'You clicked the floating button on the Messages screen!',
           context,
         ),
         splashColor: Theme.of(context).primaryColor,
         child: Icon(FontAwesomeIcons.plus),
       ),
-      body: Center(child: Text('Alternate')),
+      body: Center(child: Text('Messages')),
     );
   }
 }

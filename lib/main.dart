@@ -19,14 +19,18 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 
 // App relative file imports
-import 'screens/general/screen_alternate.dart';
+import 'screens/general/screen_messages.dart';
 import 'screens/general/screen_home.dart';
+import 'screens/general/screen_search.dart';
+import 'screens/general/screen_groups.dart';
 import 'widgets/navigation/widget_primary_scaffold.dart';
 import 'screens/auth/screen_login_validation.dart';
 import 'screens/settings/screen_profile_edit.dart';
 import 'providers/provider_user_profile.dart';
 import 'screens/settings/screen_settings.dart';
 import 'providers/provider_auth.dart';
+import 'providers/provider_groups.dart';
+import 'db_helpers/db_groups.dart';
 import 'util/file/util_file.dart';
 import 'firebase_options.dart';
 import 'theme/theme.dart';
@@ -43,6 +47,9 @@ final providerUserProfile = ChangeNotifierProvider<ProviderUserProfile>(
 );
 final providerAuth = ChangeNotifierProvider<ProviderAuth>(
   (ref) => ProviderAuth(),
+);
+final providerGroups = ChangeNotifierProvider<ProviderGroups>(
+  (ref) => ProviderGroups(),
 );
 
 //////////////////////////////////////////////////////////////////////////
@@ -63,10 +70,15 @@ Future<void> main() async {
     providerUserProfile,
   );
   final ProviderAuth authProvider = providerContainer.read(providerAuth);
+  final ProviderGroups groupsProvider = providerContainer.read(providerGroups);
 
   // Initialize providers
   await userProfileProvider.initProviders(authProvider);
   authProvider.initProviders(userProfileProvider);
+  await groupsProvider.initProviders(authProvider);
+
+  // Start the groups listener so provider is populated
+  await DbGroups.fetchGroupsAndSyncProvider(groupsProvider);
 
   // Run the app
   runApp(
@@ -117,9 +129,17 @@ class _MyAppState extends State<MyApp> {
         builder: (BuildContext context, GoRouterState state) => ScreenHome(),
       ),
       GoRoute(
-        path: ScreenAlternate.routeName,
+        path: ScreenSearch.routeName,
+        builder: (BuildContext context, GoRouterState state) => ScreenSearch(),
+      ),
+      GoRoute(
+        path: ScreenMessages.routeName,
         builder: (BuildContext context, GoRouterState state) =>
-            ScreenAlternate(),
+            ScreenMessages(),
+      ),
+      GoRoute(
+        path: ScreenGroups.routeName,
+        builder: (BuildContext context, GoRouterState state) => ScreenGroups(),
       ),
     ],
   );
@@ -132,7 +152,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp.router(
       routerConfig: _router,
-      title: 'CSC 322 Starter Project',
+      title: 'CampusMate',
       theme: lightTheme,
       darkTheme: darkTheme,
       themeMode: ThemeMode.light,

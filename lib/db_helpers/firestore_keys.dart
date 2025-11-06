@@ -10,6 +10,8 @@
 // FIRESTORE TOP-LEVEL COLLECTION NAMES
 ///////////////////////////////////////////////////////////////////////////
 const String FS_COL_IC_USER_PROFILES = 'user_profiles';
+// Top-level collection for study/groups
+const String FS_COL_IC_GROUPS = 'groups';
 
 ///////////////////////////////////////////////////////////////////////////
 // FIRESTORE MID-LEVEL COLLECTION/DOCUMENT NAMES/KEYS
