@@ -84,6 +84,7 @@ Future<void> main() async {
   runApp(
     UncontrolledProviderScope(container: providerContainer, child: MyApp()),
   );
+  print('Firebase projectId: ${Firebase.app().options.projectId}');
 }
 
 //////////////////////////////////////////////////////////////////////////

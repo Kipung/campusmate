@@ -1,8 +1,19 @@
+import 'package:campusmate/widgets/general/chatscr_usrtextbbl.dart';
 import 'package:flutter/material.dart';
+import 'dart:collection';
 
-class ChatscrTextbar extends StatelessWidget {
-  const ChatscrTextbar({super.key});
+class ChatscrTextbar extends StatefulWidget {
+  final ValueChanged<String>? onSend;
 
+  const ChatscrTextbar({super.key, this.onSend});
+
+  @override
+  State<ChatscrTextbar> createState() => _ChatscrTextbarState();
+}
+
+class _ChatscrTextbarState extends State<ChatscrTextbar> {
+  final queue = Queue<Widget>(); // ListQueue() by default
+  final userTextController = TextEditingController();
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -16,6 +27,7 @@ class ChatscrTextbar extends StatelessWidget {
           Expanded(
             child: TextField(
               style: const TextStyle(color: Colors.white),
+              controller: userTextController,
               decoration: InputDecoration(
                 hintText: 'Type a message',
                 hintStyle: const TextStyle(color: Colors.white70),
@@ -34,7 +46,25 @@ class ChatscrTextbar extends StatelessWidget {
           ),
           IconButton(onPressed: () {}, icon: const Icon(Icons.image)),
           IconButton(onPressed: () {}, icon: const Icon(Icons.file_copy)),
-          IconButton(icon: const Icon(Icons.send), onPressed: () {}),
+          IconButton(
+            icon: const Icon(Icons.send),
+            onPressed: () {
+              final text = userTextController.text.trim();
+              if (text.isEmpty) return;
+
+              // If a parent provided an onSend callback, call it.
+              if (widget.onSend != null) {
+                widget.onSend!(text);
+              }
+
+              // Optionally keep a local queue of bubbles (not displayed here)
+              setState(() {
+                queue.add(TextBubble(displayedText: text));
+              });
+
+              userTextController.clear();
+            },
+          ),
         ],
       ),
     );

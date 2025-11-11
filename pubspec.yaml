@@ -25,6 +25,7 @@ dependencies:
   path_provider: ^2.1.5
   logger: ^2.6.2
   flutter_secure_storage: ^9.2.4
+  queue: ^3.4.0
 
   
 
