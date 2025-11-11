@@ -6,7 +6,10 @@ class ChatscrTextbar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      padding: EdgeInsets.symmetric(
+        horizontal: MediaQuery.of(context).size.width * 0.03,
+        vertical: MediaQuery.of(context).size.height * 0.01,
+      ),
       color: Color(int.parse('0xFFBEC5A4')),
       child: Row(
         children: [

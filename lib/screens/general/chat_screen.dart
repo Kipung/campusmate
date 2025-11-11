@@ -19,8 +19,7 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       body: Column(
         children: [
-          Container(
-            height: MediaQuery.of(context).size.height * 0.8,
+          Expanded(
             child: Container(
               color: const Color(0xFFF1EAD8),
               // This is where chat messages would be displayed
