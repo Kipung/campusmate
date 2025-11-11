@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:campusmate/screens/general/chat_screen.dart';
+import 'package:campusmate/screens/general/screen_messages.dart';
 
 class DM_Box extends StatelessWidget {
   const DM_Box({super.key});
@@ -12,7 +13,7 @@ class DM_Box extends StatelessWidget {
         // Open chat screen logic here
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const StudyGroupScreen()),
+          MaterialPageRoute(builder: (context) => const ChatScreen()),
         );
       },
       child: Container(
