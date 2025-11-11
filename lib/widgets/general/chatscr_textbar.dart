@@ -22,9 +22,9 @@ class ChatscrTextbar extends StatelessWidget {
                 ),
                 filled: true,
                 fillColor: Color(int.parse('0xFF99A07F')),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16.0,
-                  vertical: 8.0,
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: MediaQuery.of(context).size.width * 0.04,
+                  vertical: MediaQuery.of(context).size.height * 0.015,
                 ),
               ),
             ),
