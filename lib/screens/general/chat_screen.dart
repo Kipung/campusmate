@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:campusmate/widgets/general/chatscr_top_bar.dart';
 import 'package:campusmate/widgets/general/chatscr_textbar.dart';
 import 'package:campusmate/widgets/general/chatscr_usrtextbbl.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:campusmate/db_helpers/db_chat.dart';
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
+  final String chatId;
+  const ChatScreen({super.key, required this.chatId});
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -49,22 +50,16 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ),
           ChatscrTextbar(
-            onSend: (msg) {
-              if (msg.trim().isEmpty) return;
-              setState(() {
-                _messages.add(msg);
-                _lastMessage = msg;
-              });
-              // Scroll to bottom after the new message is rendered
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (_scrollController.hasClients) {
-                  _scrollController.animateTo(
-                    _scrollController.position.maxScrollExtent,
-                    duration: const Duration(milliseconds: 200),
-                    curve: Curves.easeOut,
-                  );
-                }
-              });
+            onSend: (msg) async {
+              final text = msg.trim();
+              if (text.isEmpty) return;
+              try {
+                await DbChat.sendMessageText(widget.chatId, text);
+              } catch (e) {
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text('Failed to send: $e')));
+              }
             },
           ),
         ],
