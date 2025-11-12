@@ -1,20 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:campusmate/screens/general/chat_screen.dart';
+import 'package:campusmate/db_helpers/db_chat.dart';
 import 'package:campusmate/screens/general/screen_messages.dart';
+import 'package:campusmate/widgets/general/dm_box.dart';
 
 class DM_Box extends StatelessWidget {
-  const DM_Box({super.key});
+  final String otherUid;
+  const DM_Box({super.key, required this.otherUid});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () {
-        // Open chat screen logic here
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const ChatScreen()),
-        );
+      onTap: () async {
+        try {
+          final chatId = await DbChat.createDirectChat(otherUid);
+          if (!context.mounted) return;
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => ChatScreen(chatId: chatId)),
+          );
+        } catch (e) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Could not open chat: $e')));
+        }
       },
       child: Container(
         height: MediaQuery.of(context).size.height * 0.1,
