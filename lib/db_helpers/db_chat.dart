@@ -22,6 +22,7 @@ class DbChat {
     // Try to find existing chat
     final existing = await db
         .collection(FS_COL_CHATS)
+        .where('participants', arrayContains: uid)
         .where('pair_key', isEqualTo: pairKey)
         .limit(1)
         .get();
