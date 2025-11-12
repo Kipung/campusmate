@@ -10,25 +10,26 @@
 // Imports
 //////////////////////////////////////////////////////////////////////////
 
-// Flutter imports
-import 'dart:async';
-
 // Flutter external package imports
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 // App relative file imports
 import '../../util/message_display/snackbar.dart';
 import '../../main.dart';
 
-import 'package:campusmate/widgets/general/groupscr_box.dart';
 import 'package:campusmate/screens/general/study_group_screen.dart';
+import 'package:campusmate/db_helpers/db_groups.dart';
+import 'package:campusmate/models/groups.dart';
 
 //////////////////////////////////////////////////////////////////////////
 // StateFUL widget which manages state. Simply initializes the state object.
 //////////////////////////////////////////////////////////////////////////
 class ScreenGroups extends ConsumerStatefulWidget {
+  const ScreenGroups({super.key});
+
   static const routeName = '/groups';
 
   @override
@@ -72,42 +73,142 @@ class _ScreenGroupsState extends ConsumerState<ScreenGroups> {
   @override
   Widget build(BuildContext context) {
     final groupsProvider = ref.watch(providerGroups);
-    void _openStudyGroupScreen() {
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+
+    void openStudyGroupScreen() {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const StudyGroupScreen()),
       );
     }
 
+    Future<void> confirmDeleteGroup(Groups group) async {
+      final confirmed = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Delete group?'),
+              content: Text(
+                'Remove "${group.groupName}" for all members?',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text('Delete'),
+                ),
+              ],
+            ),
+          ) ??
+          false;
+      if (!confirmed) return;
+
+      final success = await DbGroups.deleteGroup(group.groupId);
+      if (!context.mounted) return;
+      if (success) {
+        Snackbar.show(
+          SnackbarDisplayType.SB_SUCCESS,
+          'Group deleted',
+          context,
+        );
+      } else {
+        Snackbar.show(
+          SnackbarDisplayType.SB_ERROR,
+          'Failed to delete group. Try again.',
+          context,
+        );
+      }
+    }
+
+    Widget buildEmptyState() {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.groups_outlined, size: 64, color: Colors.grey[500]),
+              const SizedBox(height: 16),
+              const Text(
+                'No study groups yet',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Tap the + button to start a group.',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: openStudyGroupScreen,
+                child: const Text('Add a Study Group'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    Widget buildGroupsList() {
+      final groups = groupsProvider.groupsList;
+      return ListView.separated(
+        padding: const EdgeInsets.all(8.0),
+        itemCount: groups.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 6),
+        itemBuilder: (context, index) {
+          final group = groups[index];
+          final isOwner = group.ownerId == currentUserId;
+          return Card(
+            child: ListTile(
+              leading: const CircleAvatar(
+                backgroundImage: AssetImage(
+                  'assets/images/group_pfpic.png',
+                ),
+              ),
+              title: Text(group.groupName),
+              subtitle: Text(
+                group.groupDescription.isEmpty
+                    ? 'No description provided'
+                    : group.groupDescription,
+              ),
+              trailing: isOwner
+                  ? IconButton(
+                      icon: const Icon(Icons.delete_outline),
+                      color: Colors.redAccent,
+                      tooltip: 'Delete group',
+                      onPressed: () => confirmDeleteGroup(group),
+                    )
+                  : null,
+              onTap: () {
+                // TODO: navigate to group detail
+              },
+            ),
+          );
+        },
+      );
+    }
+
+    Widget buildBody() {
+      if (!groupsProvider.dataLoaded) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      if (groupsProvider.groupsList.isEmpty) {
+        return buildEmptyState();
+      }
+      return buildGroupsList();
+    }
+
     // Return the scaffold
     return Scaffold(
       floatingActionButton: FloatingActionButton(
         shape: ShapeBorder.lerp(CircleBorder(), StadiumBorder(), 0.5),
-        onPressed: () => _openStudyGroupScreen(),
+        onPressed: () => openStudyGroupScreen(),
         splashColor: Theme.of(context).primaryColor,
         child: Icon(FontAwesomeIcons.plus),
       ),
-      body: groupsProvider.dataLoaded
-          ? ListView.builder(
-              padding: const EdgeInsets.all(8.0),
-              itemCount: groupsProvider.groupsList.length,
-              itemBuilder: (context, index) {
-                final g = groupsProvider.groupsList[index];
-                return ListTile(
-                  leading: const CircleAvatar(
-                    backgroundImage: AssetImage(
-                      'assets/images/group_pfpic.png',
-                    ),
-                  ),
-                  title: Text(g.groupName),
-                  subtitle: Text(g.groupDescription),
-                  onTap: () {
-                    // TODO: navigate to group detail
-                  },
-                );
-              },
-            )
-          : const Center(child: CircularProgressIndicator()),
+      body: buildBody(),
     );
   }
 }

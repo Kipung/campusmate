@@ -30,7 +30,6 @@ import 'providers/provider_user_profile.dart';
 import 'screens/settings/screen_settings.dart';
 import 'providers/provider_auth.dart';
 import 'providers/provider_groups.dart';
-import 'db_helpers/db_groups.dart';
 import 'util/file/util_file.dart';
 import 'firebase_options.dart';
 import 'theme/theme.dart';
@@ -61,6 +60,7 @@ Future<void> main() async {
 
   // Initialize Firebase with the default options
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  print('Project: ${Firebase.app().options.projectId}');
 
   // Initialize the app directory
   await UtilFile.init();
@@ -76,9 +76,6 @@ Future<void> main() async {
   await userProfileProvider.initProviders(authProvider);
   authProvider.initProviders(userProfileProvider);
   await groupsProvider.initProviders(authProvider);
-
-  // Start the groups listener so provider is populated
-  await DbGroups.fetchGroupsAndSyncProvider(groupsProvider);
 
   // Run the app
   runApp(

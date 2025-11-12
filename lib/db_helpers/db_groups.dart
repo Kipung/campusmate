@@ -54,49 +54,63 @@ class DbGroups {
   // Returns true if data was fetched and set in provider; false otherwise
   ////////////////////////////////////////////////////////////////////////////////////////////
   static Future<bool> fetchGroupsAndSyncProvider(
-    ProviderGroups providerGroups,
-  ) async {
+    ProviderGroups providerGroups, {
+    String? uidOverride,
+  }) async {
     // Initialize success variable
     bool success = false;
 
     // Get Firebase instance
     var db = FirebaseFirestore.instance;
-    if (FirebaseAuth.instance.currentUser != null) {
-      // Get the authenticated firebase user
-      final FirebaseAuth auth = FirebaseAuth.instance;
-      final User? user = auth.currentUser;
+    final String? uid = uidOverride ?? FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      return false;
+    }
 
-      // If no user logged in, return; otherwise continue
-      if (user == null) {
-        return false;
-      }
-      String uid = user.uid;
+    // Try to get the user's data from firestore and setup for future updates
+    try {
+      AppLogger.debug(
+        "Fetching groups from collection '$FS_COL_IC_GROUPS' for uid=$uid",
+      );
+      // Listen for any groups where the user is a member
+      _groupsUpdateStream = db
+          .collection(FS_COL_IC_GROUPS)
+          .where('members', arrayContains: uid)
+          .snapshots()
+          .listen(
+            (querySnapshot) async {
+              try {
+                AppLogger.debug(
+                  "Groups snapshot size=${querySnapshot.docs.length} for uid=$uid",
+                );
+                List<Groups> groups = [];
+                for (var doc in querySnapshot.docs) {
+                  Map<String, dynamic> data = doc.data();
+                  Groups group = Groups.defFromJsonDbObject(data, doc.id);
+                  groups.add(group);
+                }
 
-      // Try to get the user's data from firestore and setup for future updates
-      try {
-        // Listen for any groups where the user is a member
-        _groupsUpdateStream = db
-            .collection(FS_COL_IC_GROUPS)
-            .where('members', arrayContains: uid)
-            .snapshots()
-            .listen((querySnapshot) async {
-              List<Groups> groups = [];
-              for (var doc in querySnapshot.docs) {
-                Map<String, dynamic> data = doc.data();
-                Groups group = Groups.defFromJsonDbObject(data, doc.id);
-                groups.add(group);
+                // Update provider with the full list of groups
+                await providerGroups.updateGroupsList(groups);
+                success = true;
+              } catch (e) {
+                AppLogger.error("Failed to parse groups snapshot: $e");
+                await providerGroups.updateGroupsList([]);
               }
-
-              // Update provider with the full list of groups
-              await providerGroups.updateGroupsList(groups);
-              success = true;
-            });
-      } catch (e) {
-        AppLogger.error(
-          "Encountered problem loading user profile from firestore: $e",
-        );
-        providerGroups.wipeAndCancelDbStream();
-      }
+            },
+            onError: (e) async {
+              AppLogger.error(
+                "Groups stream error (permissions/network): $e",
+              );
+              await providerGroups.updateGroupsList([]);
+            },
+            cancelOnError: false,
+          );
+    } catch (e) {
+      AppLogger.error(
+        "Encountered problem loading user profile from firestore: $e",
+      );
+      await providerGroups.updateGroupsList([]);
     }
 
     // Return status
@@ -128,6 +142,26 @@ class DbGroups {
         // Prepare data for write
         Map<String, dynamic> json = group.toJsonForDb();
 
+        // normalize keys to snake_case to satisfy security rules
+        if (json.containsKey('groupName')) {
+          json['group_name'] = json.remove('groupName');
+        }
+        if (json.containsKey('groupDescription')) {
+          json['group_description'] = json.remove('groupDescription');
+        }
+        if (json.containsKey('ownerId')) {
+          json['owner_id'] = json.remove('ownerId');
+        }
+
+        // Ensure members is a list and includes the creator
+        final rawMembers = json['members'];
+        List<dynamic> members =
+            rawMembers is List ? List<dynamic>.from(rawMembers) : <dynamic>[];
+        if (!members.contains(uid)) {
+          members.add(uid);
+        }
+        json['members'] = members;
+
         if (group.groupId.isEmpty) {
           // Create new group: set owner_id and server timestamp for created_at
           json['owner_id'] = uid;
@@ -151,6 +185,28 @@ class DbGroups {
     }
 
     // Return status
+    return success;
+  }
+
+  ////////////////////////////////////////////////////////////////////////////////////////////
+  // Deletes a group document. Firestore security rules ensure only the owner can delete.
+  ////////////////////////////////////////////////////////////////////////////////////////////
+  static Future<bool> deleteGroup(String groupId) async {
+    bool success = false;
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      return false;
+    }
+
+    try {
+      final db = FirebaseFirestore.instance;
+      await db.collection(FS_COL_IC_GROUPS).doc(groupId).delete();
+      success = true;
+    } catch (e) {
+      AppLogger.error("Encountered problem deleting group: $e");
+      success = false;
+    }
+
     return success;
   }
 

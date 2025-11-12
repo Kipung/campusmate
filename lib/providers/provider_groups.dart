@@ -11,16 +11,19 @@
 //////////////////////////////////////////////////////////////////////////
 // Dart imports
 import 'dart:io';
+import 'dart:async';
 
 // Flutter external package imports
 import 'package:campusmate/db_helpers/db_groups.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 // App relative file imports
 import '../db_helpers/db_user_profile.dart';
 import '../models/user_profile.dart';
 import 'provider_auth.dart';
+import '../util/logging/app_logger.dart';
 
 import 'package:campusmate/models/groups.dart';
 
@@ -37,6 +40,7 @@ class ProviderGroups extends ChangeNotifier {
   bool _internetIssues = false;
   bool _userChangeInProgress = false;
   late ProviderAuth _providerAuth; // Needed to update signin status
+  StreamSubscription<User?>? _authStateSubscription;
   // List of groups that the current user belongs to
   List<Groups> _groupsList = [];
 
@@ -134,6 +138,16 @@ class ProviderGroups extends ChangeNotifier {
     if (!status.isGranted) {
       await Permission.storage.request();
     }
+
+    // Listen for auth state changes so we can start/cancel the groups listener
+    await _authStateSubscription?.cancel();
+    _authStateSubscription = FirebaseAuth.instance
+        .authStateChanges()
+        .listen(_handleAuthStateChanged);
+
+    // Immediately reflect the current auth user (if any) instead of waiting for
+    // the next authStateChanges tick.
+    await _handleAuthStateChanged(FirebaseAuth.instance.currentUser);
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -154,6 +168,7 @@ class ProviderGroups extends ChangeNotifier {
     _dataLoaded = false;
     _imageLoaded = false;
     _internetIssues = false;
+    _groupsList = [];
     await DbGroups.cancelGroupsUpdateStream();
     notifyListeners();
   }
@@ -169,6 +184,7 @@ class ProviderGroups extends ChangeNotifier {
 
     _groupsList = groups;
     _dataLoaded = true;
+    AppLogger.debug("ProviderGroups received ${groups.length} groups.");
     notifyListeners();
   }
 
@@ -290,5 +306,45 @@ class ProviderGroups extends ChangeNotifier {
   ////////////////////////////////////////////////////////////////////////////////
   Future<void> deleteAccountData() async {
     await DBUserProfile.deleteAccountData(); // Delete the account data associated with the current user
+  }
+
+  /// Responds to FirebaseAuth auth state changes by starting/stopping the
+  /// realtime groups listener as needed.
+  Future<void> _handleAuthStateChanged(User? user) async {
+    if (user == null) {
+      await DbGroups.cancelGroupsUpdateStream();
+      _groupsList = [];
+      _dataLoaded = true; // show empty state instead of spinner
+      notifyListeners();
+      return;
+    }
+
+    _groupsList = [];
+    _dataLoaded = false;
+    notifyListeners();
+
+    // Safety valve so UI doesn't spin forever if snapshot never arrives
+    Future.delayed(const Duration(seconds: 8), () {
+      if (!_dataLoaded) {
+        _dataLoaded = true;
+        notifyListeners();
+        AppLogger.error(
+          "Groups load timed out; check Firestore rules/collection/project.",
+        );
+      }
+    });
+
+    await DbGroups.cancelGroupsUpdateStream();
+    await DbGroups.fetchGroupsAndSyncProvider(
+      this,
+      uidOverride: user.uid,
+    );
+  }
+
+  @override
+  void dispose() {
+    _authStateSubscription?.cancel();
+    DbGroups.cancelGroupsUpdateStream();
+    super.dispose();
   }
 }
