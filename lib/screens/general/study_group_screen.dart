@@ -3,6 +3,7 @@ import 'package:campusmate/widgets/general/personality_trait.dart';
 import 'package:campusmate/db_helpers/db_groups.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:campusmate/models/groups.dart';
+import 'package:campusmate/constants/group_filters.dart';
 
 class StudyGroupScreen extends StatefulWidget {
   const StudyGroupScreen({super.key});
@@ -16,16 +17,14 @@ class _StudyGroupScreenState extends State<StudyGroupScreen> {
   final TextEditingController _groupNameController = TextEditingController();
   final TextEditingController _groupDescriptionController =
       TextEditingController();
-  final TextEditingController _majorController = TextEditingController();
   List<String> _selectedPersonalityTraits = [];
-  List<String> _selectedMajors = [];
+  String? _selectedMajor;
   bool _isSubmitting = false;
 
   @override
   void dispose() {
     _groupNameController.dispose();
     _groupDescriptionController.dispose();
-    _majorController.dispose();
     super.dispose();
   }
 
@@ -50,9 +49,7 @@ class _StudyGroupScreenState extends State<StudyGroupScreen> {
 
     final name = _groupNameController.text.trim();
     final description = _groupDescriptionController.text.trim();
-    final majors = (_selectedMajors.isNotEmpty)
-        ? _selectedMajors.map((s) => s.trim()).toList()
-        : [_majorController.text.trim()].where((s) => s.isNotEmpty).toList();
+    final majors = _selectedMajor != null ? <String>[_selectedMajor!] : <String>[];
     final traits = _selectedPersonalityTraits;
 
     final group = Groups(
@@ -124,8 +121,19 @@ class _StudyGroupScreenState extends State<StudyGroupScreen> {
             ),
             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: TextFormField(
-                controller: _majorController,
+              child: DropdownButtonFormField<String>(
+                value: _selectedMajor,
+                items: AcademicMajors.majors
+                    .map(
+                      (major) => DropdownMenuItem(
+                        value: major,
+                        child: Text(major),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (value) => setState(() => _selectedMajor = value),
+                validator: (value) =>
+                    (value == null || value.isEmpty) ? 'Select a major' : null,
                 decoration: const InputDecoration(
                   labelText: 'Major',
                   border: OutlineInputBorder(),

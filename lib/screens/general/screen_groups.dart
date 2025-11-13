@@ -43,6 +43,26 @@ class _ScreenGroupsState extends ConsumerState<ScreenGroups> {
   // The "instance variables" managed in this state
   bool _isInit = true;
 
+  // List of selectable traits to filter groups by
+   final List<String> personalityTraits = [
+    'Calm',
+    'Organized',
+    'Social',
+    'Optimistic',
+    'Detail-Oriented',
+    'Creative',
+    'Analytical',
+    'Dependable',
+    'Adaptable',
+    'Motivated',
+    'Patient',
+    'Welcoming',
+    'Spontaneous',
+  ];
+
+  // List of selected personality traits to filter groups by
+   final List<String> selectedTraits = [];
+
   ////////////////////////////////////////////////////////////////
   // Runs the following code once upon initialization
   ////////////////////////////////////////////////////////////////
@@ -195,6 +215,7 @@ class _ScreenGroupsState extends ConsumerState<ScreenGroups> {
 
     // Return the scaffold
     return Scaffold(
+      // Floating action button to create a new study group
       floatingActionButton: FloatingActionButton(
         shape: ShapeBorder.lerp(CircleBorder(), StadiumBorder(), 0.5),
         onPressed: () => openStudyGroupScreen(),
