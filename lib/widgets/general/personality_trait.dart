@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:campusmate/constants/group_filters.dart';
 import 'package:campusmate/widgets/general/personality_tag.dart';
 
 class PersonalityTrain extends StatefulWidget {
@@ -13,12 +14,7 @@ class PersonalityTrain extends StatefulWidget {
 
 class _PersonalityTrainState extends State<PersonalityTrain> {
   // Predefined list of personality traits
-  final List<String> personalityTraits = [
-    'Calm',
-    'Organized',
-    'Social',
-    'Optimist',
-  ];
+  final List<String> personalityTraits = PersonalityTraits.traits;
 
   final Set<String> selectedTraits = {};
 
