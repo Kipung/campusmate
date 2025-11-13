@@ -159,6 +159,9 @@ class _ScreenSearchState extends State<ScreenSearch> {
     return filtered;
   }
 
+  ////////////////////////////////////////////////////////////////////////
+  // Primary Flutter method overridden which describes the layout and bindings for this widget.
+  ////////////////////////////////////////////////////////////////////////
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);

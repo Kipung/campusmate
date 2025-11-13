@@ -23,6 +23,7 @@ import '../../main.dart';
 import 'package:campusmate/screens/general/study_group_screen.dart';
 import 'package:campusmate/db_helpers/db_groups.dart';
 import 'package:campusmate/models/groups.dart';
+import 'package:campusmate/constants/group_filters.dart';
 
 //////////////////////////////////////////////////////////////////////////
 // StateFUL widget which manages state. Simply initializes the state object.
@@ -44,21 +45,7 @@ class _ScreenGroupsState extends ConsumerState<ScreenGroups> {
   bool _isInit = true;
 
   // List of selectable traits to filter groups by
-   final List<String> personalityTraits = [
-    'Calm',
-    'Organized',
-    'Social',
-    'Optimistic',
-    'Detail-Oriented',
-    'Creative',
-    'Analytical',
-    'Dependable',
-    'Adaptable',
-    'Motivated',
-    'Patient',
-    'Welcoming',
-    'Spontaneous',
-  ];
+   final List<String> selectableTraits = PersonalityTraits.traits;
 
   // List of selected personality traits to filter groups by
    final List<String> selectedTraits = [];
