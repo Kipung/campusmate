@@ -96,9 +96,9 @@ class _ScreenMessagesState extends ConsumerState<ScreenMessages> {
         ),
       ),
       body: ListView.builder(
-        itemCount: 20, // Example item count
+        itemCount: 1, // Example item count
         itemBuilder: (context, index) {
-          return const DM_Box();
+          return const DM_Box(otherUid: 'other_user_uid');
         },
       ),
     );

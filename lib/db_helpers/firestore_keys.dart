@@ -12,6 +12,10 @@
 const String FS_COL_IC_USER_PROFILES = 'user_profiles';
 // Top-level collection for study/groups
 const String FS_COL_IC_GROUPS = 'groups';
+// Top-level collection for one-on-one chats
+const String FS_COL_CHATS = 'chats';
+// Sub-collection for chat messages within each chat document
+const String FS_COL_CHAT_MESSAGES = 'messages';
 
 ///////////////////////////////////////////////////////////////////////////
 // FIRESTORE MID-LEVEL COLLECTION/DOCUMENT NAMES/KEYS
