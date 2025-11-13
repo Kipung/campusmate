@@ -83,13 +83,12 @@ class _ScreenGroupsState extends ConsumerState<ScreenGroups> {
     }
 
     Future<void> confirmDeleteGroup(Groups group) async {
-      final confirmed = await showDialog<bool>(
+      final confirmed =
+          await showDialog<bool>(
             context: context,
             builder: (context) => AlertDialog(
               title: const Text('Delete group?'),
-              content: Text(
-                'Remove "${group.groupName}" for all members?',
-              ),
+              content: Text('Remove "${group.groupName}" for all members?'),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(false),
@@ -108,11 +107,7 @@ class _ScreenGroupsState extends ConsumerState<ScreenGroups> {
       final success = await DbGroups.deleteGroup(group.groupId);
       if (!context.mounted) return;
       if (success) {
-        Snackbar.show(
-          SnackbarDisplayType.SB_SUCCESS,
-          'Group deleted',
-          context,
-        );
+        Snackbar.show(SnackbarDisplayType.SB_SUCCESS, 'Group deleted', context);
       } else {
         Snackbar.show(
           SnackbarDisplayType.SB_ERROR,
@@ -140,11 +135,11 @@ class _ScreenGroupsState extends ConsumerState<ScreenGroups> {
                 'Tap the + button to start a group.',
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: openStudyGroupScreen,
-                child: const Text('Add a Study Group'),
-              ),
+              // const SizedBox(height: 16),
+              // ElevatedButton(
+              //   onPressed: openStudyGroupScreen,
+              //   child: const Text('Add a Study Group'),
+              // ),
             ],
           ),
         ),
@@ -163,9 +158,7 @@ class _ScreenGroupsState extends ConsumerState<ScreenGroups> {
           return Card(
             child: ListTile(
               leading: const CircleAvatar(
-                backgroundImage: AssetImage(
-                  'assets/images/group_pfpic.png',
-                ),
+                backgroundImage: AssetImage('assets/images/group_pfpic.png'),
               ),
               title: Text(group.groupName),
               subtitle: Text(
