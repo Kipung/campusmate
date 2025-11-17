@@ -11,7 +11,6 @@
 // Dart imports
 
 // Flutter external package imports
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:flutter/cupertino.dart';
@@ -20,12 +19,11 @@ import 'package:flutter/material.dart';
 // App relative file imports
 import '../../screens/general/screen_home.dart';
 import '../../screens/general/screen_search.dart';
-import '../../screens/general/screen_groups.dart';
+import '../../screens/general/screen_group/screen_groups.dart';
 import '../../screens/general/screen_messages.dart';
 
 import 'widget_primary_app_bar.dart';
 import 'widget_app_drawer.dart';
-import '../../main.dart';
 
 //////////////////////////////////////////////////////////////////////////
 // Localized provider for the current tab index
