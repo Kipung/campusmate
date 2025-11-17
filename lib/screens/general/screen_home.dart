@@ -12,18 +12,18 @@
 
 // Flutter imports
 import 'dart:async';
+import 'dart:convert';
+import 'dart:math';
 
 // Flutter external package imports
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 
 // App relative file imports
-import '../../util/message_display/snackbar.dart';
-
-import 'dart:convert';
+import '../../db_helpers/firestore_keys.dart';
 import '../../widgets/general/recommended_user.dart';
-import 'dart:math';
 
 //////////////////////////////////////////////////////////////////////////
 // StateFUL widget which manages state. Simply initializes the state object.
@@ -41,6 +41,8 @@ class ScreenHome extends ConsumerStatefulWidget {
 class _ScreenHomeState extends ConsumerState<ScreenHome> {
   // The "instance variables" managed in this state
   bool _isInit = true;
+  late final Stream<QuerySnapshot<Map<String, dynamic>>>
+      _recommendedUsersStream;
 
   ////////////////////////////////////////////////////////////////
   // Runs the following code once upon initialization
@@ -57,6 +59,10 @@ class _ScreenHomeState extends ConsumerState<ScreenHome> {
 
   @override
   void initState() {
+    _recommendedUsersStream = FirebaseFirestore.instance
+        .collection(FS_COL_IC_USER_PROFILES)
+        .limit(12)
+        .snapshots();
     super.initState();
   }
 
@@ -168,21 +174,71 @@ class _ScreenHomeState extends ConsumerState<ScreenHome> {
             const SizedBox(height: 8.0),
 
             // Horizontal scrollable list of RecommendedUser widgets
-            SizedBox(
-              height: 220,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                itemCount: 8,
-                separatorBuilder: (_, __) => const SizedBox(width: 12.0),
-                itemBuilder: (context, index) {
-                  return const RecommendedUser();
-                },
-              ),
-            ),
+            _buildRecommendedUsersCarousel(),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildRecommendedUsersCarousel() {
+    final currentUid = FirebaseAuth.instance.currentUser?.uid;
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: _recommendedUsersStream,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SizedBox(
+            height: 220,
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (snapshot.hasError) {
+          return SizedBox(
+            height: 120,
+            child: Center(
+              child: Text(
+                'Unable to load suggested students.',
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+            ),
+          );
+        }
+
+        final docs = snapshot.data?.docs ?? [];
+        final users = docs.where((doc) => doc.id != currentUid).take(10).toList();
+        if (users.isEmpty) {
+          return SizedBox(
+            height: 120,
+            child: Center(
+              child: Text(
+                'No new students to suggest yet.',
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+            ),
+          );
+        }
+
+        return SizedBox(
+          height: 220,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+            itemCount: users.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 12.0),
+            itemBuilder: (context, index) {
+              final data = users[index].data();
+              final firstName = (data['first_name'] ?? '').toString();
+              final lastName = (data['last_name'] ?? '').toString();
+              final major = (data['major'] ?? 'Undeclared').toString();
+              final displayName = '$firstName $lastName'.trim();
+              return RecommendedUser(
+                displayName: displayName.isEmpty ? 'CampusMate User' : displayName,
+                subtitle: major.isEmpty ? 'Undeclared' : major,
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }
