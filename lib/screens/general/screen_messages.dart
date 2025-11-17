@@ -28,7 +28,8 @@ import '../../widgets/general/dm_box.dart';
 //////////////////////////////////////////////////////////////////////////
 class ScreenMessages extends ConsumerStatefulWidget {
   static const routeName = '/messages';
-  const ScreenMessages({super.key});
+  final String? initialChatId;
+  const ScreenMessages({super.key, this.initialChatId});
 
   @override
   ConsumerState<ScreenMessages> createState() => _ScreenMessagesState();
@@ -40,6 +41,7 @@ class ScreenMessages extends ConsumerStatefulWidget {
 class _ScreenMessagesState extends ConsumerState<ScreenMessages> {
   // The "instance variables" managed in this state
   bool _isInit = true;
+  String? _initialChatId;
 
   ////////////////////////////////////////////////////////////////
   // Runs the following code once upon initialization
@@ -56,6 +58,7 @@ class _ScreenMessagesState extends ConsumerState<ScreenMessages> {
 
   @override
   void initState() {
+    _initialChatId = widget.initialChatId;
     super.initState();
   }
 

@@ -11,10 +11,12 @@
 //////////////////////////////////////////////////////////////////////////
 
 // Flutter external package imports
+import 'package:campusmate/db_helpers/db_chat.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:go_router/go_router.dart';
 
 // App relative file imports
 import '../../util/message_display/snackbar.dart';
@@ -45,10 +47,10 @@ class _ScreenGroupsState extends ConsumerState<ScreenGroups> {
   bool _isInit = true;
 
   // List of selectable traits to filter groups by
-   final List<String> selectableTraits = PersonalityTraits.traits;
+  final List<String> selectableTraits = PersonalityTraits.traits;
 
   // List of selected personality traits to filter groups by
-   final List<String> selectedTraits = [];
+  final List<String> selectedTraits = [];
 
   ////////////////////////////////////////////////////////////////
   // Runs the following code once upon initialization
@@ -181,8 +183,19 @@ class _ScreenGroupsState extends ConsumerState<ScreenGroups> {
                       onPressed: () => confirmDeleteGroup(group),
                     )
                   : null,
-              onTap: () {
-                // TODO: navigate to group detail
+              onTap: () async {
+                try {
+                  final chatId = await DbChat.createGroupChat(group.members);
+                  if (!mounted) return;
+                  context.push(
+                    '/chat/$chatId',
+                  ); // jump directly into the conversation
+                } catch (e) {
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Could not start chat: $e')),
+                  );
+                }
               },
             ),
           );

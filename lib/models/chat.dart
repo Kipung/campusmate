@@ -11,6 +11,10 @@ class Chat {
   String _lastMessage = '';
   int _createdAt = 0; // ms since epoch
   int _lastUpdated = 0; // ms since epoch
+  bool _isGroup = false;
+  String _name = '';
+  String _photoUrl = '';
+  String _createdBy = '';
   Map<String, int> _unread = {};
 
   Chat(
@@ -21,6 +25,10 @@ class Chat {
     this._createdAt,
     this._lastUpdated,
     this._unread,
+    this._isGroup,
+    this._name,
+    this._photoUrl,
+    this._createdBy,
   );
 
   Chat.empty();
@@ -55,6 +63,14 @@ class Chat {
 
     final rawUnread = Map<String, dynamic>.from(jsonObject['unread'] ?? {});
     _unread = rawUnread.map((k, v) => MapEntry(k, (v is int) ? v : 0));
+
+    final isGroupVal = jsonObject['is_group'];
+    _isGroup = isGroupVal is bool ? isGroupVal : false;
+    _name = jsonObject['name'] is String ? jsonObject['name'] as String : '';
+    _photoUrl =
+        jsonObject['photo_url'] is String ? jsonObject['photo_url'] as String : '';
+    _createdBy =
+        jsonObject['created_by'] is String ? jsonObject['created_by'] as String : '';
   }
 
   // Getters
@@ -65,6 +81,10 @@ class Chat {
   int get createdAt => _createdAt;
   int get lastUpdated => _lastUpdated;
   Map<String, int> get unread => _unread;
+  bool get isGroup => _isGroup;
+  String get name => _name;
+  String get photoUrl => _photoUrl;
+  String get createdBy => _createdBy;
 
   Map<String, dynamic> toJsonForDb() {
     final json = <String, dynamic>{};
@@ -74,7 +94,10 @@ class Chat {
     json['created_at'] = _createdAt;
     json['last_updated'] = _lastUpdated;
     json['unread'] = _unread;
+    json['is_group'] = _isGroup;
+    json['name'] = _name;
+    json['photo_url'] = _photoUrl;
+    json['created_by'] = _createdBy;
     return json;
   }
 }
-
