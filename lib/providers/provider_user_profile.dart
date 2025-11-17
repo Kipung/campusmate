@@ -62,6 +62,18 @@ class ProviderUserProfile extends ChangeNotifier {
 
   String get wholeName => "${_userProfile.firstName} ${_userProfile.lastName}";
 
+  String get bio => _userProfile.bio;
+  set bio(String value) {
+    _userProfile.bio = value;
+    notifyListeners();
+  }
+
+  String get major => _userProfile.major;
+  set major(String value) {
+    _userProfile.major = value;
+    notifyListeners();
+  }
+
   String get email => _userProfile.email;
   set email(String value) {
     _userProfile.email = value;

@@ -63,6 +63,8 @@ class _ScreenProfileSetupState extends ConsumerState<ScreenProfileSetup> {
   final _formKey = GlobalKey<FormState>();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
+  final _bioController = TextEditingController();
+  String _selectedMajor = '';
 
   ////////////////////////////////////////////////////////////////
   // Runs the following code once upon initialization
@@ -99,6 +101,9 @@ class _ScreenProfileSetupState extends ConsumerState<ScreenProfileSetup> {
     // Get the providers
     _providerUserProfile = ref.watch(providerUserProfile);
     _providerAuth = ref.watch(providerAuth);
+    // Initialize bio and major fields from provider
+    _bioController.text = _providerUserProfile.bio;
+    _selectedMajor = _providerUserProfile.major;
   }
 
   @override
@@ -184,6 +189,8 @@ class _ScreenProfileSetupState extends ConsumerState<ScreenProfileSetup> {
       // Update profile information and write to database
       _providerUserProfile.firstName = _firstNameController.text.trim();
       _providerUserProfile.lastName = _lastNameController.text.trim();
+      _providerUserProfile.bio = _bioController.text.trim();
+      _providerUserProfile.major = _selectedMajor;
       _providerUserProfile.accountCreationStep = AccountCreationStep.ACC_STEP_ONBOARDING_COMPLETE;
       _providerUserProfile.writeUserProfileToDb();
 
@@ -473,6 +480,55 @@ class _ScreenProfileSetupState extends ConsumerState<ScreenProfileSetup> {
                       onSaved: (value) {},
                       keyboardType: TextInputType.name,
                       decoration: InputDecoration(labelText: 'Last Name'),
+                    ),
+                  ),
+                  ///////////////////////////////////////////////////////////////////////
+                  // Bio Text Field
+                  ///////////////////////////////////////////////////////////////////////
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 5),
+                    child: TextFormField(
+                      controller: _bioController,
+                      maxLines: 4,
+                      maxLength: 250,
+                      decoration: const InputDecoration(labelText: 'Bio', hintText: 'Tell others about yourself (max 250 chars)'),
+                      keyboardType: TextInputType.multiline,
+                      validator: (value) {
+                        if (value != null && value.length > 250) return 'Bio must be 250 characters or less.';
+                        return null;
+                      },
+                    ),
+                  ),
+                  ///////////////////////////////////////////////////////////////////////
+                  // Major Dropdown
+                  ///////////////////////////////////////////////////////////////////////
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 5),
+                    child: DropdownButtonFormField<String>(
+                      value: _selectedMajor.isEmpty ? null : _selectedMajor,
+                      decoration: const InputDecoration(labelText: 'Major'),
+                      items: <String>[
+                        '',
+                        'Computer Science',
+                        'Biology',
+                        'Business',
+                        'Psychology',
+                        'Engineering',
+                        'Undeclared'
+                      ].map((maj) {
+                        return DropdownMenuItem<String>(
+                          value: maj,
+                          child: Text(maj.isEmpty ? 'Select major' : maj),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        setState(() {
+                          _selectedMajor = val ?? '';
+                        });
+                      },
+                      validator: (value) {
+                        return null; // optional field
+                      },
                     ),
                   ),
                   ///////////////////////////////////////////////////////////////////////
