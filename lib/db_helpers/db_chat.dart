@@ -45,6 +45,50 @@ class DbChat {
     return ref.id;
   }
 
+  // Create a group chat with participants
+  static Future<String> createGroupChat(List<String> participantIds) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      throw Exception('Not signed in');
+    }
+    final uid = user.uid;
+
+    final participantsSet = <String>{...participantIds, uid};
+    final participants = List<String>.from(participantsSet);
+    final sortedParticipants = List<String>.from(participants)..sort();
+    final groupKey = sortedParticipants.join('_');
+    final db = FirebaseFirestore.instance;
+
+    // Try to reuse an existing group chat with the same participant set
+    final existing = await db
+        .collection(FS_COL_CHATS)
+        .where('participants', arrayContains: uid)
+        .where('is_group', isEqualTo: true)
+        .where('group_key', isEqualTo: groupKey)
+        .limit(1)
+        .get();
+    if (existing.docs.isNotEmpty) {
+      return existing.docs.first.id;
+    }
+
+    // Create new group chat
+    final ref = await db.collection(FS_COL_CHATS).add({
+      'participants': participants,
+      'group_key': groupKey,
+      'is_group': true,
+      'created_at': FieldValue.serverTimestamp(),
+      'created_by': uid,
+      'last_updated': FieldValue.serverTimestamp(),
+      'last_message': null,
+      'unread': {for (var p in participants) p: 0},
+    });
+
+    if (!participants.contains(uid)) throw Exception('Not a chat member');
+
+    AppLogger.print('Group chat created: ${ref.id}');
+    return ref.id;
+  }
+
   // 2) Send a text message; atomically update last_message/last_updated and unread counts
   static Future<void> sendMessageText(String chatId, String text) async {
     final user = FirebaseAuth.instance.currentUser;

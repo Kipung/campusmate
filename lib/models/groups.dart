@@ -77,7 +77,8 @@ class Groups {
     _groupId = groupId;
     _groupName = jsonObject["group_name"] ?? "";
     _groupDescription = jsonObject["group_description"] ?? "";
-    _members = List<String>.from(jsonObject["members"] ?? []);
+    final membersFromJson = jsonObject["members"] ?? jsonObject["participant_ids"] ?? [];
+    _members = List<String>.from(membersFromJson);
     _personalityTraits = List<String>.from(
       jsonObject["personality_traits"] ?? [],
     );
@@ -206,6 +207,8 @@ class Groups {
     jsonObject["permission_level"] = _getStringFromPermissionLevel(
       permissionLevel,
     );
+    jsonObject["owner_id"] = ownerId;
+    jsonObject["created_at"] = createdAt;
 
     // Return the JSON object
     return jsonObject;

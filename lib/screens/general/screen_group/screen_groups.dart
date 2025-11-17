@@ -15,6 +15,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:go_router/go_router.dart';
 
 // App relative file imports
 import '../../../util/message_display/snackbar.dart';
@@ -25,8 +26,6 @@ import 'package:campusmate/db_helpers/db_groups.dart';
 import 'package:campusmate/models/groups.dart';
 import 'package:campusmate/constants/group_filters.dart';
 import 'package:campusmate/screens/general/screen_group/group_detail.dart';
-
-import 'package:go_router/go_router.dart';
 
 //////////////////////////////////////////////////////////////////////////
 // StateFUL widget which manages state. Simply initializes the state object.
@@ -178,7 +177,6 @@ class _ScreenGroupsState extends ConsumerState<ScreenGroups> {
                     )
                   : null,
               onTap: () {
-                // TODO: navigate to group detail screen
                 context.push(ScreenGroupsDetail.routeName, extra: group);
               },
             ),
