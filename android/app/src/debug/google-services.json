@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "389441895583",
+    "project_id": "campusmate-40439",
+    "storage_bucket": "campusmate-40439.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:389441895583:android:5f4635c1eb1fc5780ff6aa",
+        "android_client_info": {
+          "package_name": "com.example.campusmate"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "389441895583-bibkgj79hq0lsg0elht0fs1sumu04dj4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBydBOWcK5sFw9qcOY9civZhxXC6-_19_M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "389441895583-bibkgj79hq0lsg0elht0fs1sumu04dj4.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "389441895583-e2h912a33fg6cl7icsnhq4882qup1ouv.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.campusmate"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

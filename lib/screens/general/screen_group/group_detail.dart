@@ -6,6 +6,8 @@ import 'package:campusmate/screens/general/screen_group/screen_groups.dart';
 import 'package:campusmate/providers/provider_groups.dart';
 import 'package:campusmate/providers/provider_auth.dart';
 import 'package:campusmate/providers/provider_groups.dart';
+import 'package:campusmate/db_helpers/db_chat.dart';
+import 'package:go_router/go_router.dart';
 
 //////////////////////////////////////////////////////////////////////////
 /// StateFUL widget which manages state. Simply initializes the state object.
@@ -167,8 +169,21 @@ class _ScreenGroupsDetailState extends ConsumerState<ScreenGroupsDetail> {
                   ),
                   // Events Tile
                   GestureDetector(
-                    onTap: () {
-                      // Navigate to events screen
+                    onTap: () async {
+                      try {
+                        final chatId = await DbChat.createGroupChat(
+                          group.members,
+                        );
+                        if (!mounted) return;
+                        context.push(
+                          '/chat/$chatId',
+                        ); // jump directly into the conversation
+                      } catch (e) {
+                        if (!mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Could not start chat: $e')),
+                        );
+                      }
                     },
                     child: Container(
                       decoration: BoxDecoration(
@@ -181,13 +196,13 @@ class _ScreenGroupsDetailState extends ConsumerState<ScreenGroupsDetail> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
-                              Icons.event,
+                              Icons.chat_bubble,
                               size: 40,
                               color: Colors.orange.shade700,
                             ),
                             SizedBox(height: 8),
                             Text(
-                              'Schedules',
+                              'Chats',
                               style: Theme.of(context).textTheme.bodyLarge,
                             ),
                           ],

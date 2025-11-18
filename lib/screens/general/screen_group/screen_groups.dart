@@ -11,10 +11,12 @@
 //////////////////////////////////////////////////////////////////////////
 
 // Flutter external package imports
+import 'package:campusmate/db_helpers/db_chat.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:go_router/go_router.dart';
 
 // App relative file imports
 import '../../../util/message_display/snackbar.dart';
@@ -179,10 +181,8 @@ class _ScreenGroupsState extends ConsumerState<ScreenGroups> {
                       onPressed: () => confirmDeleteGroup(group),
                     )
                   : null,
-              onTap: () {
-                // TODO: navigate to group detail screen
-                context.push(ScreenGroupsDetail.routeName, extra: group);
-              },
+              onTap: () =>
+                  context.push(ScreenGroupsDetail.routeName, extra: group),
             ),
           );
         },
