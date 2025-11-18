@@ -22,6 +22,7 @@ import '../../constants/group_filters.dart';
 import '../../db_helpers/firestore_keys.dart';
 import '../../models/groups.dart';
 import '../../util/message_display/snackbar.dart';
+import '../../models/user_profile.dart';
 
 // //////////////////////////////////////////////////////////////////////////
 // Search screen implemented as a StatefulWidget that fetches Firestore data
@@ -47,14 +48,37 @@ class _ScreenSearchState extends State<ScreenSearch> {
   final List<String> _selectedMajors = [];
   final List<Groups> _allGroups = [];
   final List<Groups> _filteredGroups = [];
+  final List<UserProfile> _allMembers = [];
+  final List<UserProfile> _filteredMembers = [];
   bool _loading = true;
   String? _errorMessage;
+
+  // Searching groups or members toggle
+  bool _searchMode = false; // false = groups, true = members
+
+  void _toggleSearchMode() {
+    setState(() {
+      _searchMode = !_searchMode;
+      _query = '';
+      _controller.clear();
+      _recomputeFilters();
+    });
+    if (_searchMode) {
+      _loadMembers();
+    } else {
+      _loadGroups();
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     _controller.addListener(_onSearchChanged);
-    _loadGroups();
+    if (_searchMode) {
+      _loadMembers();
+    } else {
+      _loadGroups();
+    }
   }
 
   @override
@@ -114,11 +138,54 @@ class _ScreenSearchState extends State<ScreenSearch> {
     }
   }
 
+  Future<void> _loadMembers() async {
+    if (!mounted) return;
+    setState(() {
+      _loading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final snapshot =
+          await FirebaseFirestore.instance.collection(FS_COL_IC_USER_PROFILES).get();
+      if (!mounted) return;
+
+      final members = snapshot.docs
+          .map((doc) => UserProfile.defFromJsonDbObject(doc.data(), doc.id))
+          .toList();
+
+      _allMembers
+        ..clear()
+        ..addAll(members);
+      _filteredMembers
+        ..clear()
+        ..addAll(_filterMembers(_allMembers));
+
+      // Ensure UI updates and loading indicator is hidden after data is loaded
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _errorMessage = 'Unable to load members. Pull down to try again.';
+        _allMembers.clear();
+        _filteredMembers.clear();
+      });
+    }
+  }
+
   void _recomputeFilters() {
     if (!mounted) return;
     _filteredGroups
       ..clear()
       ..addAll(_filterGroups(_allGroups));
+    setState(() {});
+    _filteredMembers
+      ..clear()
+      ..addAll(_filterMembers(_allMembers));
     setState(() {});
   }
 
@@ -159,6 +226,28 @@ class _ScreenSearchState extends State<ScreenSearch> {
     return filtered;
   }
 
+  List<UserProfile> _filterMembers(List<UserProfile> source) {
+    final query = _query.toLowerCase();
+
+    final filtered = source.where((member) {
+      final fullName =
+          '${member.firstName} ${member.lastName}'.toLowerCase();
+      if (query.isNotEmpty && !fullName.contains(query)) {
+        return false;
+      }
+      return true;
+    }).toList()
+      ..sort(
+        (a, b) {
+          final nameA = '${a.firstName} ${a.lastName}'.toLowerCase();
+          final nameB = '${b.firstName} ${b.lastName}'.toLowerCase();
+          return nameA.compareTo(nameB);
+        },
+      );
+
+    return filtered;
+  }
+
   ////////////////////////////////////////////////////////////////////////
   // Primary Flutter method overridden which describes the layout and bindings for this widget.
   ////////////////////////////////////////////////////////////////////////
@@ -170,62 +259,109 @@ class _ScreenSearchState extends State<ScreenSearch> {
     return Scaffold(
       backgroundColor: const Color(0xFFF9F9FB),
       floatingActionButton: Container(
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: theme.colorScheme.primary.withValues(alpha: 0.4),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-          gradient: LinearGradient(
-            colors: [
-              theme.colorScheme.primaryContainer,
-              theme.colorScheme.primary,
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: [
+        BoxShadow(
+          color: theme.colorScheme.primary.withValues(alpha: 0.4),
+          blurRadius: 10,
+          offset: const Offset(0, 4),
         ),
-        child: FloatingActionButton(
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-          onPressed: () => Snackbar.show(
-            SnackbarDisplayType.SB_INFO,
-            'You clicked the floating button on the search screen!',
-            context,
-          ),
-          splashColor: theme.colorScheme.primary.withValues(alpha: 0.3),
-          child: const Icon(
-            FontAwesomeIcons.plus,
-            color: Colors.white,
-            size: 26,
-          ),
+        ],
+        gradient: LinearGradient(
+        colors: [
+          theme.colorScheme.primaryContainer,
+          theme.colorScheme.primary,
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
         ),
       ),
+      child: FloatingActionButton(
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        onPressed: () => Snackbar.show(
+        SnackbarDisplayType.SB_INFO,
+        'You clicked the floating button on the search screen!',
+        context,
+        ),
+        splashColor: theme.colorScheme.primary.withValues(alpha: 0.3),
+        child: const Icon(
+        FontAwesomeIcons.plus,
+        color: Colors.white,
+        size: 26,
+        ),
+      ),
+      ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Column(
-            children: [
-              _buildSearchBar(textTheme),
-              const SizedBox(height: 16),
-              _buildTraitsFilter(theme, textTheme),
-              const SizedBox(height: 12),
-              _buildMajorsFilter(theme, textTheme),
-              const SizedBox(height: 16),
-              Expanded(
-                child: _loading
-                    ? const Center(child: CircularProgressIndicator())
-                    : RefreshIndicator(
-                        onRefresh: _loadGroups,
-                        child: _buildResultsList(theme, textTheme),
-                      ),
-              ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Column(
+        children: [
+          _buildSearchBar(textTheme),
+          const SizedBox(height: 12),
+
+          // Toggle to switch between searching groups and members/users
+          Container(
+          width: double.infinity,
+          padding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
             ],
           ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+            Text(
+              'Search mode',
+              style: textTheme.bodyMedium
+                ?.copyWith(fontWeight: FontWeight.w600),
+            ),
+            Row(
+              children: [
+              Text('Groups',
+                style: textTheme.bodyMedium
+                  ?.copyWith(color: Colors.grey[700])),
+              const SizedBox(width: 8),
+              Switch.adaptive(
+                value: _searchMode,
+                onChanged: (_) => _toggleSearchMode(),
+                activeColor: theme.colorScheme.primary,
+              ),
+              const SizedBox(width: 8),
+              Text('Members',
+                style: textTheme.bodyMedium
+                  ?.copyWith(color: Colors.grey[700])),
+              ],
+            ),
+            ],
+          ),
+          ),
+
+          const SizedBox(height: 16),
+          _buildTraitsFilter(theme, textTheme),
+          const SizedBox(height: 12),
+          _buildMajorsFilter(theme, textTheme),
+          const SizedBox(height: 16),
+          Expanded(
+          child: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : RefreshIndicator(
+              onRefresh: _loadGroups,
+              child: _buildResultsList(theme, textTheme),
+              ),
+          ),
+        ],
         ),
+      ),
       ),
     );
   }
@@ -410,6 +546,92 @@ class _ScreenSearchState extends State<ScreenSearch> {
   }
 
   Widget _buildResultsList(ThemeData theme, TextTheme textTheme) {
+    if (_searchMode) {
+      // Show members list
+      if (_errorMessage != null) {
+        return ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            const SizedBox(height: 80),
+            Icon(FontAwesomeIcons.triangleExclamation,
+                color: theme.colorScheme.error, size: 32),
+            const SizedBox(height: 12),
+            Text(
+              _errorMessage!,
+              textAlign: TextAlign.center,
+              style:
+                  textTheme.bodyLarge?.copyWith(color: theme.colorScheme.error),
+            ),
+            const SizedBox(height: 12),
+            Center(
+              child: TextButton(
+                onPressed: _loadMembers,
+                child: const Text('Try again'),
+              ),
+            ),
+          ],
+        );
+      }
+
+      if (_filteredMembers.isEmpty) {
+        final message =
+            _query.isEmpty ? 'No members available.' : 'No members match your filters.';
+        return ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            const SizedBox(height: 80),
+            Icon(FontAwesomeIcons.user, color: theme.colorScheme.primary, size: 32),
+            const SizedBox(height: 12),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: textTheme.bodyLarge?.copyWith(color: Colors.grey[600]),
+            ),
+          ],
+        );
+      }
+
+      return ListView.separated(
+        physics: const AlwaysScrollableScrollPhysics(),
+        itemCount: _filteredMembers.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        itemBuilder: (ctx, index) {
+          final member = _filteredMembers[index];
+          final fullName = '${member.firstName} ${member.lastName}'.trim();
+
+          return Card(
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            margin: const EdgeInsets.symmetric(horizontal: 4),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () {
+                // TODO: navigate to member profile page
+              },
+              child: ListTile(
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                leading: CircleAvatar(
+                  radius: 24,
+                  backgroundColor: theme.colorScheme.primaryContainer,
+                  child: Icon(
+                    FontAwesomeIcons.user,
+                    color: theme.colorScheme.primary,
+                    size: 20,
+                  ),
+                ),
+                title: Text(fullName.isNotEmpty ? fullName : 'Unnamed',
+                    style: textTheme.titleMedium),
+              ),
+            ),
+          );
+        },
+      );
+    }
+
+    // If not in member search mode, fall through to groups handling below.
     if (_errorMessage != null) {
       return ListView(
         physics: const AlwaysScrollableScrollPhysics(),
