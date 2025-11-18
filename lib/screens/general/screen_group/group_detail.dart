@@ -9,6 +9,7 @@ import 'package:campusmate/providers/provider_groups.dart';
 import 'package:campusmate/db_helpers/db_chat.dart';
 import 'package:go_router/go_router.dart';
 import 'package:campusmate/screens/general/screen_group/grid_view/members_screen.dart';
+import 'package:campusmate/screens/general/screen_group/calendar_screen.dart';
 
 //////////////////////////////////////////////////////////////////////////
 /// StateFUL widget which manages state. Simply initializes the state object.
@@ -246,6 +247,7 @@ class _ScreenGroupsDetailState extends ConsumerState<ScreenGroupsDetail> {
                   GestureDetector(
                     onTap: () {
                       // Navigate to calendar screen
+                      context.push(CalendarScreen.routeName, extra: group);
                     },
                     child: Container(
                       decoration: BoxDecoration(

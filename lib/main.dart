@@ -38,6 +38,7 @@ import 'screens/general/screen_group/group_detail.dart';
 import 'package:campusmate/models/groups.dart';
 import 'package:campusmate/screens/general/screen_group/grid_view/members_screen.dart';
 import 'package:campusmate/models/user_profile.dart';
+import 'screens/general/screen_group/calendar_screen.dart';
 
 //////////////////////////////////////////////////////////////////////////
 // Providers
@@ -168,6 +169,13 @@ class _MyAppState extends State<MyApp> {
           // For simplicity, using an empty list here
           final members = <UserProfile>[];
           return MembersScreen(members: members);
+        },
+      ),
+      GoRoute(
+        path: CalendarScreen.routeName,
+        builder: (BuildContext context, GoRouterState state) {
+          final group = state.extra as Groups; // cast to your model type
+          return CalendarScreen(group: group);
         },
       ),
     ],
