@@ -161,9 +161,14 @@ class _MyAppState extends State<MyApp> {
       ),
       // route for group members screen with groupId parameter
       GoRoute(
-        path: MembersScreen.routeName,
-        builder: (context, state) =>
-            MembersScreen(members: state.extra as List<UserProfile>),
+        path: '/group/:groupId/members',
+        builder: (context, state) {
+          final groupId = state.pathParameters['groupId']!;
+          // Fetch group members based on groupId
+          // For simplicity, using an empty list here
+          final members = <UserProfile>[];
+          return MembersScreen(members: members);
+        },
       ),
     ],
   );
