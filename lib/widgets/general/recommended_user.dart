@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 class RecommendedUser extends StatelessWidget {
   final String displayName;
   final String subtitle;
-  final VoidCallback? onAddFriend;
+  final VoidCallback? onViewProfile;
 
   const RecommendedUser({
     super.key,
     required this.displayName,
     required this.subtitle,
-    this.onAddFriend,
+    this.onViewProfile,
   });
 
   @override
@@ -50,7 +50,7 @@ class RecommendedUser extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: onAddFriend,
+              onPressed: onViewProfile,
               style: ElevatedButton.styleFrom(
                 elevation: 0,
                 backgroundColor: const Color(0xFFD8DCC1),
@@ -60,9 +60,9 @@ class RecommendedUser extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8.0),
                 ),
               ),
-              child: Text(
-                onAddFriend == null ? 'View Profile' : 'Add Friend',
-                style: const TextStyle(color: Colors.white),
+              child: const Text(
+                'View Profile',
+                style: TextStyle(color: Colors.white),
               ),
             ),
           ),
