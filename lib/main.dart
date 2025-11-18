@@ -34,6 +34,7 @@ import 'util/file/util_file.dart';
 import 'firebase_options.dart';
 import 'theme/theme.dart';
 import 'screens/general/screen_group/group_detail.dart';
+import 'screens/general/chat_screen.dart';
 import 'package:campusmate/models/groups.dart';
 import 'package:campusmate/screens/general/screen_group/grid_view/members_screen.dart';
 import 'package:campusmate/models/user_profile.dart';
@@ -151,9 +152,18 @@ class _MyAppState extends State<MyApp> {
         },
       ),
       GoRoute(
+        path: '/chat/:chatId',
+        builder: (context, state) {
+          final chatId = state.pathParameters['chatId']!;
+          return ChatScreen(chatId: chatId);
+        },
+      ),
+      GoRoute(
         path: '/group/:groupId/members',
-        builder: (context, state) =>
-            MembersScreen(members: state.extra as List<UserProfile>),
+        builder: (context, state) {
+          final members = <UserProfile>[];
+          return MembersScreen(members: members);
+        },
       ),
     ],
   );
