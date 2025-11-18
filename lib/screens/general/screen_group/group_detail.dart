@@ -2,10 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:campusmate/models/groups.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:campusmate/screens/general/screen_group/screen_groups.dart';
-import 'package:campusmate/providers/provider_groups.dart';
-import 'package:campusmate/providers/provider_auth.dart';
-import 'package:campusmate/providers/provider_groups.dart';
+import 'package:go_router/go_router.dart';
 
 //////////////////////////////////////////////////////////////////////////
 /// StateFUL widget which manages state. Simply initializes the state object.
@@ -109,6 +106,7 @@ class _ScreenGroupsDetailState extends ConsumerState<ScreenGroupsDetail> {
                   GestureDetector(
                     onTap: () {
                       // Navigate to members screen
+                      context.push('/group/${group.groupId}/members');
                     },
                     child: Container(
                       decoration: BoxDecoration(

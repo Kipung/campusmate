@@ -35,6 +35,8 @@ import 'firebase_options.dart';
 import 'theme/theme.dart';
 import 'screens/general/screen_group/group_detail.dart';
 import 'package:campusmate/models/groups.dart';
+import 'package:campusmate/screens/general/screen_group/grid_view/members_screen.dart';
+import 'package:campusmate/models/user_profile.dart';
 
 //////////////////////////////////////////////////////////////////////////
 // Providers
@@ -147,6 +149,11 @@ class _MyAppState extends State<MyApp> {
           final group = state.extra as Groups;
           return ScreenGroupsDetail(group: group);
         },
+      ),
+      GoRoute(
+        path: '/group/:groupId/members',
+        builder: (context, state) =>
+            MembersScreen(members: state.extra as List<UserProfile>),
       ),
     ],
   );
