@@ -144,7 +144,7 @@ class _MyAppState extends State<MyApp> {
       GoRoute(
         path: ScreenGroupsDetail.routeName,
         builder: (BuildContext context, GoRouterState state) {
-          final group = state.extra as Groups;
+          final group = state.extra as Groups; // cast to your model type
           return ScreenGroupsDetail(group: group);
         },
       ),
