@@ -19,15 +19,15 @@ import 'package:campusmate/theme/colors.dart';
 final ThemeData lightTheme = ThemeData(
   colorScheme: ColorScheme(
     // primary: Color(0xFF7FBDDC),
-    primary: Color(0xFF022A3A),
+    primary: Color(0xFF99A07F),
     onPrimary: Color(0xFFFFFFFF),
     // onPrimary: Color(0xFF022A3A),
-    secondary: Color(0xFF022A3A),
+    secondary: Color(0xFFD5C7AD),
     onSecondary: Color(0xFFFFFFFF),
     surface: CustomColors.offWhite,
     error: Color(0xFFCC0000),
     onError: Color(0xFFFFFFFF),
-    onSurface: Color(0xFF022A3A),
+    onSurface: Color(0xFF99A07F),
     brightness: Brightness.light,
   ),
   useMaterial3: true,

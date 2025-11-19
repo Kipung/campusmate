@@ -27,6 +27,6 @@ class CustomColors {
 
   static const Color primaryBackgroundLightMode = Color.fromARGB(255, 255, 255, 255);
   static const Color primaryBackgroundDarkMode = Color.fromARGB(255, 33, 33, 33);
-  static const Color primaryNavBarLightMode = Color.fromARGB(255, 219, 219, 219);
-  static const Color primaryNavBarDarkMode = Color.fromARGB(255, 68, 68, 68);
+  static const Color primaryNavBarLightMode = Color.fromARGB(255, 190, 197, 164);
+  static const Color primaryNavBarDarkMode = Color.fromARGB(255, 45, 47, 34);
 }

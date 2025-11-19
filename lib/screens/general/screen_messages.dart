@@ -73,7 +73,7 @@ class _ScreenMessagesState extends ConsumerState<ScreenMessages> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(int.parse('0xFFD5C7AD')),
+      
       appBar: AppBar(
         backgroundColor: Color(int.parse('0xFFBEC5A4')),
         title: SizedBox(

@@ -1,11 +1,16 @@
 import "package:flutter/material.dart";
 
-
-class TextBubble extends StatelessWidget {
+// Text bubble widget that is responsive to text length
+class TextBubble extends StatefulWidget {
   final String displayedText;
 
   const TextBubble({super.key, required this.displayedText});
 
+  @override
+  State<TextBubble> createState() => _TextBubbleState();
+}
+
+class _TextBubbleState extends State<TextBubble> {
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -19,7 +24,7 @@ class TextBubble extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
         child: Text(
-          displayedText,
+          widget.displayedText,
           style: const TextStyle(color: Colors.white, fontSize: 16.0),
         ),
       ),
