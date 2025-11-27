@@ -1,16 +1,16 @@
 import "package:flutter/material.dart";
 
 // Text bubble widget that is responsive to text length
-class TextBubble extends StatefulWidget {
+class UsrTextBubble extends StatefulWidget {
   final String displayedText;
 
-  const TextBubble({super.key, required this.displayedText});
+  const UsrTextBubble({super.key, required this.displayedText});
 
   @override
-  State<TextBubble> createState() => _TextBubbleState();
+  State<UsrTextBubble> createState() => _UsrTextBubbleState();
 }
 
-class _TextBubbleState extends State<TextBubble> {
+class _UsrTextBubbleState extends State<UsrTextBubble> {
   @override
   Widget build(BuildContext context) {
     return Container(
