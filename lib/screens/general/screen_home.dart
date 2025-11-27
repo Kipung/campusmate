@@ -12,18 +12,19 @@
 
 // Flutter imports
 import 'dart:async';
+import 'dart:convert';
+import 'dart:math';
 
 // Flutter external package imports
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 
 // App relative file imports
-import '../../util/message_display/snackbar.dart';
-
-import 'dart:convert';
+import '../../db_helpers/firestore_keys.dart';
+import '../../services/friend_service.dart';
 import '../../widgets/general/recommended_user.dart';
-import 'dart:math';
 
 //////////////////////////////////////////////////////////////////////////
 // StateFUL widget which manages state. Simply initializes the state object.
@@ -41,6 +42,9 @@ class ScreenHome extends ConsumerStatefulWidget {
 class _ScreenHomeState extends ConsumerState<ScreenHome> {
   // The "instance variables" managed in this state
   bool _isInit = true;
+  late final Stream<QuerySnapshot<Map<String, dynamic>>>
+      _recommendedUsersStream;
+  final FriendService _friendService = FriendService();
 
   ////////////////////////////////////////////////////////////////
   // Runs the following code once upon initialization
@@ -57,6 +61,10 @@ class _ScreenHomeState extends ConsumerState<ScreenHome> {
 
   @override
   void initState() {
+    _recommendedUsersStream = FirebaseFirestore.instance
+        .collection(FS_COL_IC_USER_PROFILES)
+        .limit(12)
+        .snapshots();
     super.initState();
   }
 
@@ -72,16 +80,6 @@ class _ScreenHomeState extends ConsumerState<ScreenHome> {
   Widget build(BuildContext context) {
     // Return the scaffold
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        shape: ShapeBorder.lerp(CircleBorder(), StadiumBorder(), 0.5),
-        onPressed: () => Snackbar.show(
-          SnackbarDisplayType.SB_INFO,
-          'You clicked the floating button on the home screen!',
-          context,
-        ),
-        splashColor: Theme.of(context).primaryColor,
-        child: Icon(FontAwesomeIcons.plus),
-      ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
         child: Column(
@@ -178,21 +176,217 @@ class _ScreenHomeState extends ConsumerState<ScreenHome> {
             const SizedBox(height: 8.0),
 
             // Horizontal scrollable list of RecommendedUser widgets
-            SizedBox(
-              height: 220,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                itemCount: 8,
-                separatorBuilder: (_, __) => const SizedBox(width: 12.0),
-                itemBuilder: (context, index) {
-                  return const RecommendedUser();
-                },
-              ),
-            ),
+            _buildRecommendedUsersCarousel(),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildRecommendedUsersCarousel() {
+    final currentUid = FirebaseAuth.instance.currentUser?.uid;
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: _recommendedUsersStream,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SizedBox(
+            height: 220,
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (snapshot.hasError) {
+          return SizedBox(
+            height: 120,
+            child: Center(
+              child: Text(
+                'Unable to load suggested students.',
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+            ),
+          );
+        }
+
+        final docs = snapshot.data?.docs ?? [];
+        final users = docs.where((doc) => doc.id != currentUid).take(10).toList();
+        if (users.isEmpty) {
+          return SizedBox(
+            height: 120,
+            child: Center(
+              child: Text(
+                'No new students to suggest yet.',
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+            ),
+          );
+        }
+
+        return SizedBox(
+          height: 220,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+            itemCount: users.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 12.0),
+            itemBuilder: (context, index) {
+              final doc = users[index];
+              final data = doc.data();
+              final firstName = (data['first_name'] ?? '').toString();
+              final lastName = (data['last_name'] ?? '').toString();
+              final major = (data['major'] ?? 'Undeclared').toString();
+              final displayName = '$firstName $lastName'.trim();
+              return RecommendedUser(
+                displayName: displayName.isEmpty ? 'CampusMate User' : displayName,
+                subtitle: major.isEmpty ? 'Undeclared' : major,
+                onViewProfile: () => _showUserProfileSheet(doc.id, data),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  void _showUserProfileSheet(
+    String userId,
+    Map<String, dynamic> userData,
+  ) {
+    final currentUid = FirebaseAuth.instance.currentUser?.uid;
+    if (currentUid == null || currentUid == userId) return;
+
+    final firstName = (userData['first_name'] ?? '').toString();
+    final lastName = (userData['last_name'] ?? '').toString();
+    final displayName =
+        '$firstName $lastName'.trim().isEmpty ? 'CampusMate User' : '$firstName $lastName'.trim();
+    final major = (userData['major'] ?? 'Undeclared').toString();
+    final bio = (userData['bio'] ?? '').toString();
+
+    showModalBottomSheet(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        final friendDocStream = FirebaseFirestore.instance
+            .collection(FS_COL_IC_USER_PROFILES)
+            .doc(currentUid)
+            .collection('friends')
+            .doc(userId)
+            .snapshots();
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 16,
+              bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 24,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: CircleAvatar(
+                    radius: 32,
+                    child: Text(
+                      displayName.isEmpty ? '?' : displayName[0].toUpperCase(),
+                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Center(
+                  child: Text(
+                    displayName,
+                    style: Theme.of(sheetContext).textTheme.titleLarge,
+                  ),
+                ),
+                Center(
+                  child: Text(
+                    major.isEmpty ? 'Undeclared' : major,
+                    style: Theme.of(sheetContext).textTheme.bodyMedium,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Bio',
+                  style: Theme.of(sheetContext).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  bio.isEmpty ? 'This student has not added a bio yet.' : bio,
+                  style: Theme.of(sheetContext).textTheme.bodyLarge,
+                ),
+                const SizedBox(height: 24),
+                StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                  stream: friendDocStream,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    final isFriend = snapshot.data?.exists ?? false;
+                    if (isFriend) {
+                      return SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () => _friendService.removeFriend(
+                            context: sheetContext,
+                            myUid: currentUid,
+                            otherUid: userId,
+                          ),
+                          child: const Text('Remove Friend'),
+                        ),
+                      );
+                    }
+                    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                      stream: _getPendingRequestStream(currentUid, userId),
+                      builder: (context, requestSnapshot) {
+                        if (requestSnapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator());
+                        }
+                        final pendingDocs = requestSnapshot.data?.docs ?? [];
+                        final hasPending = pendingDocs.isNotEmpty;
+                        return SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              if (hasPending) {
+                                _friendService.cancelFriendRequest(
+                                  context: sheetContext,
+                                  requestId: pendingDocs.first.id,
+                                );
+                              } else {
+                                _friendService.sendFriendRequest(
+                                  context: sheetContext,
+                                  myUid: currentUid,
+                                  targetUid: userId,
+                                );
+                              }
+                            },
+                            child: Text(hasPending ? 'Cancel Request' : 'Add Friend'),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> _getPendingRequestStream(
+    String fromUid,
+    String toUid,
+  ) {
+    return FirebaseFirestore.instance
+        .collection('friend_requests')
+        .where('from', isEqualTo: fromUid)
+        .where('to', isEqualTo: toUid)
+        .where('status', isEqualTo: 'pending')
+        .limit(1)
+        .snapshots();
   }
 }

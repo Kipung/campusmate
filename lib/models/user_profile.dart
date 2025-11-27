@@ -31,6 +31,8 @@ class UserProfile {
   String _firstName = "";
   String _lastName = "";
   String _email = "";
+  String _bio = "";
+  String _major = "";
   PermissionLevel _permissionLevel = PermissionLevel.PRODUCTION;
   int _accountCreationTime = 0;
   DateTime _dateLastPasswordChange = DateTime.now().add(const Duration(days: -365));
@@ -70,6 +72,8 @@ class UserProfile {
     firstName = jsonObject["first_name"] ?? "";
     lastName = jsonObject["last_name"] ?? "";
     email = jsonObject["email"] ?? "";
+    bio = jsonObject["bio"] ?? "";
+    major = jsonObject["major"] ?? "";
     uid = firebaseUid;
     permissionLevel = _getPermissionLevelFromString(
       jsonObject["permission_level"] ?? _getStringFromPermissionLevel(PermissionLevel.PRODUCTION),
@@ -95,6 +99,8 @@ class UserProfile {
   set accountCreationTime(int value) => _accountCreationTime = value;
   set dateLastPasswordChange(DateTime value) => _dateLastPasswordChange = value;
   set accountCreationStep(AccountCreationStep value) => _accountCreationStep = value;
+  set bio(String value) => _bio = value;
+  set major(String value) => _major = value;
 
   ////////////////////////////////////////////////////////////////////////
   // GETTERS
@@ -103,6 +109,8 @@ class UserProfile {
   String get firstName => _firstName;
   String get lastName => _lastName;
   String get email => _email;
+  String get bio => _bio;
+  String get major => _major;
 
   PermissionLevel get permissionLevel => _permissionLevel;
   int get accountCreationTime => _accountCreationTime;
@@ -178,6 +186,8 @@ class UserProfile {
     jsonObject["account_creation_time"] = accountCreationTime;
     jsonObject["date_last_password_change"] = _dateLastPasswordChange;
     jsonObject["account_creation_step"] = getStringFromStep(accountCreationStep);
+    jsonObject["bio"] = bio;
+    jsonObject["major"] = major;
 
     // Return the JSON object
     return jsonObject;

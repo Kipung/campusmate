@@ -11,19 +11,24 @@
 //////////////////////////////////////////////////////////////////////////
 
 // Flutter external package imports
+import 'package:campusmate/db_helpers/db_chat.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:go_router/go_router.dart';
 
 // App relative file imports
-import '../../util/message_display/snackbar.dart';
-import '../../main.dart';
+import '../../../util/message_display/snackbar.dart';
+import '../../../main.dart';
 
-import 'package:campusmate/screens/general/study_group_screen.dart';
+import 'package:campusmate/screens/general/screen_group/study_group_screen.dart';
 import 'package:campusmate/db_helpers/db_groups.dart';
 import 'package:campusmate/models/groups.dart';
 import 'package:campusmate/constants/group_filters.dart';
+import 'package:campusmate/screens/general/screen_group/group_detail.dart';
+
+import 'package:go_router/go_router.dart';
 
 // Go
 
@@ -144,11 +149,6 @@ class _ScreenGroupsState extends ConsumerState<ScreenGroups> {
                 'Tap the + button to start a group.',
                 textAlign: TextAlign.center,
               ),
-              // const SizedBox(height: 16),
-              // ElevatedButton(
-              //   onPressed: openStudyGroupScreen,
-              //   child: const Text('Add a Study Group'),
-              // ),
             ],
           ),
         ),
@@ -181,9 +181,8 @@ class _ScreenGroupsState extends ConsumerState<ScreenGroups> {
                       onPressed: () => confirmDeleteGroup(group),
                     )
                   : null,
-              onTap: () {
-                // TODO: navigate to group detail
-              },
+              onTap: () =>
+                  context.push(ScreenGroupsDetail.routeName, extra: group),
             ),
           );
         },

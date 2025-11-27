@@ -22,7 +22,8 @@ import 'package:flutter/material.dart';
 import 'screens/general/screen_messages.dart';
 import 'screens/general/screen_home.dart';
 import 'screens/general/screen_search.dart';
-import 'screens/general/screen_groups.dart';
+import 'screens/general/screen_group/screen_groups.dart';
+import 'screens/general/chat_screen.dart';
 import 'widgets/navigation/widget_primary_scaffold.dart';
 import 'screens/auth/screen_login_validation.dart';
 import 'screens/settings/screen_profile_edit.dart';
@@ -33,6 +34,11 @@ import 'providers/provider_groups.dart';
 import 'util/file/util_file.dart';
 import 'firebase_options.dart';
 import 'theme/theme.dart';
+import 'screens/general/screen_group/group_detail.dart';
+import 'package:campusmate/models/groups.dart';
+import 'package:campusmate/screens/general/screen_group/grid_view/members_screen.dart';
+import 'package:campusmate/models/user_profile.dart';
+import 'screens/general/screen_group/calendar_screen.dart';
 
 //////////////////////////////////////////////////////////////////////////
 // Providers
@@ -138,6 +144,39 @@ class _MyAppState extends State<MyApp> {
       GoRoute(
         path: ScreenGroups.routeName,
         builder: (BuildContext context, GoRouterState state) => ScreenGroups(),
+      ),
+      GoRoute(
+        path: ScreenGroupsDetail.routeName,
+        builder: (BuildContext context, GoRouterState state) {
+          final group = state.extra as Groups; // cast to your model type
+          return ScreenGroupsDetail(group: group);
+        },
+      ),
+      // route for individual chat screen with chatId parameter
+      GoRoute(
+        path: '/chat/:chatId',
+        builder: (context, state) {
+          final chatId = state.pathParameters['chatId']!;
+          return ChatScreen(chatId: chatId);
+        },
+      ),
+      // route for group members screen with groupId parameter
+      GoRoute(
+        path: '/group/:groupId/members',
+        builder: (context, state) {
+          final groupId = state.pathParameters['groupId']!;
+          // Fetch group members based on groupId
+          // For simplicity, using an empty list here
+          final members = <UserProfile>[];
+          return MembersScreen(members: members);
+        },
+      ),
+      GoRoute(
+        path: CalendarScreen.routeName,
+        builder: (BuildContext context, GoRouterState state) {
+          final group = state.extra as Groups; // cast to your model type
+          return CalendarScreen(group: group);
+        },
       ),
     ],
   );

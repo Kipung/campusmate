@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:campusmate/widgets/general/personality_trait.dart';
 import 'package:campusmate/db_helpers/db_groups.dart';
+import 'package:campusmate/db_helpers/db_chat.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:campusmate/models/groups.dart';
 import 'package:campusmate/constants/group_filters.dart';
+import 'package:go_router/go_router.dart';
 
 class StudyGroupScreen extends StatefulWidget {
   const StudyGroupScreen({super.key});
@@ -13,18 +15,30 @@ class StudyGroupScreen extends StatefulWidget {
 }
 
 class _StudyGroupScreenState extends State<StudyGroupScreen> {
+  static const String _kPlaceholderMemberId =
+      '0MsyzG7X1zT3LeSH4JywWmaamJG2';
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _groupNameController = TextEditingController();
   final TextEditingController _groupDescriptionController =
       TextEditingController();
+  final TextEditingController _memberIdsController = TextEditingController();
   List<String> _selectedPersonalityTraits = [];
+  List<String> _memberIds = [];
   String? _selectedMajor;
   bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _memberIds = [_kPlaceholderMemberId];
+    _memberIdsController.text = _kPlaceholderMemberId;
+  }
 
   @override
   void dispose() {
     _groupNameController.dispose();
     _groupDescriptionController.dispose();
+    _memberIdsController.dispose();
     super.dispose();
   }
 
@@ -49,15 +63,17 @@ class _StudyGroupScreenState extends State<StudyGroupScreen> {
 
     final name = _groupNameController.text.trim();
     final description = _groupDescriptionController.text.trim();
-    final majors = _selectedMajor != null ? <String>[_selectedMajor!] : <String>[];
+    final majors =
+        _selectedMajor != null ? <String>[_selectedMajor!] : <String>[];
     final traits = _selectedPersonalityTraits;
+    final members = <String>{uid, ..._memberIds}.toList();
 
     final group = Groups(
       '', // empty groupId -> DbGroups will create a new doc
       uid, // ownerId
       name,
       description,
-      [uid], // initial members (creator included)
+      members, // include creator + selected members
       traits,
       majors,
       PermissionLevel.PRODUCTION,
@@ -67,12 +83,26 @@ class _StudyGroupScreenState extends State<StudyGroupScreen> {
     try {
       final success = await DbGroups.writeGroup(group);
       if (success) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Group created')));
-        Navigator.of(
-          context,
-        ).pop(); // close the create screen; provider listener will update list
+        String? chatId;
+        try {
+          chatId = await DbChat.createGroupChat(group.members);
+          print('List of members: ${group.members}');
+        } catch (e) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Group created but chat failed: $e')),
+          );
+        }
+
+        if (!mounted) return;
+        context.pop(); // close create screen before navigating to chat
+        if (chatId != null) {
+          context.push('/chat/$chatId');
+        } else {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Group created')));
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to create group. Try again.')),
@@ -125,10 +155,8 @@ class _StudyGroupScreenState extends State<StudyGroupScreen> {
                 value: _selectedMajor,
                 items: AcademicMajors.majors
                     .map(
-                      (major) => DropdownMenuItem(
-                        value: major,
-                        child: Text(major),
-                      ),
+                      (major) =>
+                          DropdownMenuItem(value: major, child: Text(major)),
                     )
                     .toList(),
                 onChanged: (value) => setState(() => _selectedMajor = value),
@@ -153,6 +181,26 @@ class _StudyGroupScreenState extends State<StudyGroupScreen> {
             PersonalityTrain(
               onSelectionChanged: (list) =>
                   setState(() => _selectedPersonalityTraits = list),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: TextFormField(
+                controller: _memberIdsController,
+                decoration: const InputDecoration(
+                  labelText: 'Member UIDs (comma separated)',
+                  helperText: 'Temporary input to add members by UID',
+                  border: OutlineInputBorder(),
+                ),
+                onChanged: (value) {
+                  final parsed = value
+                      .split(',')
+                      .map((id) => id.trim())
+                      .where((id) => id.isNotEmpty)
+                      .toSet();
+                  parsed.add(_kPlaceholderMemberId);
+                  setState(() => _memberIds = parsed.toList());
+                },
+              ),
             ),
             const SizedBox(height: 8),
             ElevatedButton(

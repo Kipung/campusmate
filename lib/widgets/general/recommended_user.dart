@@ -1,41 +1,56 @@
 import 'package:flutter/material.dart';
 
-class RecommendedUser extends StatefulWidget {
-  const RecommendedUser({Key? key}) : super(key: key);
+class RecommendedUser extends StatelessWidget {
+  final String displayName;
+  final String subtitle;
+  final VoidCallback? onViewProfile;
 
-  @override
-  _RecommendedUserState createState() => _RecommendedUserState();
-}
+  const RecommendedUser({
+    super.key,
+    required this.displayName,
+    required this.subtitle,
+    this.onViewProfile,
+  });
 
-class _RecommendedUserState extends State<RecommendedUser> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 160,
-      padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 16.0),
+      width: 170,
+      padding: const EdgeInsets.symmetric(vertical: 18.0, horizontal: 16.0),
       decoration: BoxDecoration(
-        // color: Colors.white,
         border: Border.all(color: const Color(0xFFD5C7AD), width: 4.0),
         borderRadius: BorderRadius.circular(12.0),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.account_circle, size: 72, color: Color(0xFF2D2D1F)),
+          const Icon(Icons.account_circle, size: 64, color: Color(0xFF2D2D1F)),
           const SizedBox(height: 12.0),
-          const Text(
-            'John Doe',
-            style: TextStyle(
+          Text(
+            displayName,
+            style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: Color(0xFF2D2D1F),
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 12.0),
+          const SizedBox(height: 6.0),
+          Text(
+            subtitle,
+            style: const TextStyle(
+              fontSize: 13,
+              color: Color(0xFF4D4D3A),
+            ),
+            maxLines: 2,
+            textAlign: TextAlign.center,
+          ),
+          const Spacer(),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {},
+              onPressed: onViewProfile,
               style: ElevatedButton.styleFrom(
                 elevation: 0,
                 backgroundColor: const Color(0xFFD8DCC1),
@@ -46,7 +61,7 @@ class _RecommendedUserState extends State<RecommendedUser> {
                 ),
               ),
               child: const Text(
-                'Add Friend',
+                'View Profile',
                 style: TextStyle(color: Colors.white),
               ),
             ),
