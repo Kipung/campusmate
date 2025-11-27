@@ -6,6 +6,9 @@ import '../util/logging/app_logger.dart';
 import 'firestore_keys.dart';
 
 class DbChat {
+  // Current user's UID getter
+  static String? get currentUid => FirebaseAuth.instance.currentUser?.uid;
+
   // 1) Create or reuse a direct chat between the current user and otherUserId
   static Future<String> createDirectChat(String otherUserId) async {
     final user = FirebaseAuth.instance.currentUser;
