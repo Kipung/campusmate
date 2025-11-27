@@ -59,7 +59,7 @@ class _ChatscrTextbarState extends State<ChatscrTextbar> {
 
               // Optionally keep a local queue of bubbles (not displayed here)
               setState(() {
-                queue.add(TextBubble(displayedText: text));
+                queue.add(UsrTextBubble(displayedText: text));
               });
 
               userTextController.clear();

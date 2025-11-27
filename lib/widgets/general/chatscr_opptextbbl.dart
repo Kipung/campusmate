@@ -1,16 +1,22 @@
 import "package:flutter/material.dart";
 
-class TextBubble extends StatelessWidget {
-  const TextBubble({super.key});
+// Text bubble widget that is responsive to text length
+class OppTextBubble extends StatefulWidget {
+  final String displayedText;
 
-  // Displays the text in the chat screen
-  final String displayedText = "Testing purposes...";
+  const OppTextBubble({super.key, required this.displayedText});
 
+  @override
+  State<OppTextBubble> createState() => _OppTextBubbleState();
+}
+
+class _OppTextBubbleState extends State<OppTextBubble> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: MediaQuery.of(context).size.height * 0.06,
-      width: MediaQuery.of(context).size.width * 0.9,
+      constraints: BoxConstraints(
+        maxWidth: MediaQuery.of(context).size.width * 0.8,
+      ),
       decoration: BoxDecoration(
         color: const Color(0xFFD5C7AD),
         borderRadius: BorderRadius.circular(8.0),
@@ -18,8 +24,8 @@ class TextBubble extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
         child: Text(
-          displayedText,
-          style: const TextStyle(color: Colors.black12, fontSize: 16.0),
+          widget.displayedText,
+          style: const TextStyle(color: Colors.black, fontSize: 16.0),
         ),
       ),
     );
