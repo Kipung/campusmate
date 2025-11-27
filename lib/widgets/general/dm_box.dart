@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:campusmate/screens/general/chat_screen.dart';
+import 'package:go_router/go_router.dart';
 import 'package:campusmate/db_helpers/db_chat.dart';
-import 'package:campusmate/screens/general/screen_messages.dart';
-import 'package:campusmate/widgets/general/dm_box.dart';
 
 class DM_Box extends StatelessWidget {
   final String otherUid;
@@ -16,10 +14,7 @@ class DM_Box extends StatelessWidget {
         try {
           final chatId = await DbChat.createDirectChat(otherUid);
           if (!context.mounted) return;
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => ChatScreen(chatId: chatId)),
-          );
+          context.push('/chat/$chatId');
         } catch (e) {
           ScaffoldMessenger.of(
             context,
