@@ -85,8 +85,9 @@ class _ScreenSearchState extends State<ScreenSearch> {
     });
 
     try {
-      final snapshot =
-          await FirebaseFirestore.instance.collection(FS_COL_IC_GROUPS).get();
+      final snapshot = await FirebaseFirestore.instance
+          .collection(FS_COL_IC_GROUPS)
+          .get();
       if (!mounted) return;
 
       final groups = snapshot.docs
@@ -127,34 +128,36 @@ class _ScreenSearchState extends State<ScreenSearch> {
     final traitsLower = _selectedTraits.map((t) => t.toLowerCase()).toList();
     final majorsLower = _selectedMajors.map((m) => m.toLowerCase()).toList();
 
-    final filtered = source.where((group) {
-      final nameLower = group.groupName.toLowerCase();
-      if (query.isNotEmpty && !nameLower.contains(query)) {
-        return false;
-      }
+    final filtered =
+        source.where((group) {
+          final nameLower = group.groupName.toLowerCase();
+          if (query.isNotEmpty && !nameLower.contains(query)) {
+            return false;
+          }
 
-      if (traitsLower.isNotEmpty) {
-        final groupTraits =
-            group.personalityTraits.map((t) => t.toLowerCase()).toSet();
-        if (!traitsLower.every(groupTraits.contains)) {
-          return false;
-        }
-      }
+          if (traitsLower.isNotEmpty) {
+            final groupTraits = group.personalityTraits
+                .map((t) => t.toLowerCase())
+                .toSet();
+            if (!traitsLower.every(groupTraits.contains)) {
+              return false;
+            }
+          }
 
-      if (majorsLower.isNotEmpty) {
-        final groupMajors =
-            group.majors.map((major) => major.toLowerCase()).toSet();
-        if (!majorsLower.every(groupMajors.contains)) {
-          return false;
-        }
-      }
+          if (majorsLower.isNotEmpty) {
+            final groupMajors = group.majors
+                .map((major) => major.toLowerCase())
+                .toSet();
+            if (!majorsLower.every(groupMajors.contains)) {
+              return false;
+            }
+          }
 
-      return true;
-    }).toList()
-      ..sort(
-        (a, b) =>
-            a.groupName.toLowerCase().compareTo(b.groupName.toLowerCase()),
-      );
+          return true;
+        }).toList()..sort(
+          (a, b) =>
+              a.groupName.toLowerCase().compareTo(b.groupName.toLowerCase()),
+        );
 
     return filtered;
   }
@@ -288,10 +291,10 @@ class _ScreenSearchState extends State<ScreenSearch> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Traits',
-              style: textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              )),
+          Text(
+            'Traits',
+            style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 8),
           SizedBox(
             height: 48,
@@ -307,13 +310,15 @@ class _ScreenSearchState extends State<ScreenSearch> {
                   label: Text(trait, style: textTheme.bodyMedium),
                   selected: isSelected,
                   showCheckmark: false,
-                  selectedColor:
-                      theme.colorScheme.primaryContainer.withValues(alpha: 0.6),
-                  backgroundColor:
-                      theme.colorScheme.primaryContainer.withValues(alpha: 0.2),
+                  selectedColor: theme.colorScheme.primaryContainer.withValues(
+                    alpha: 0.6,
+                  ),
+                  backgroundColor: theme.colorScheme.primaryContainer
+                      .withValues(alpha: 0.2),
                   labelStyle: TextStyle(
-                    color:
-                        isSelected ? theme.colorScheme.primary : Colors.grey[800],
+                    color: isSelected
+                        ? theme.colorScheme.primary
+                        : Colors.grey[800],
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
@@ -358,10 +363,10 @@ class _ScreenSearchState extends State<ScreenSearch> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Majors',
-              style: textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              )),
+          Text(
+            'Majors',
+            style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 8),
           SizedBox(
             height: 48,
@@ -377,13 +382,15 @@ class _ScreenSearchState extends State<ScreenSearch> {
                   label: Text(major, style: textTheme.bodyMedium),
                   selected: isSelected,
                   showCheckmark: false,
-                  selectedColor:
-                      theme.colorScheme.primaryContainer.withValues(alpha: 0.6),
-                  backgroundColor:
-                      theme.colorScheme.primaryContainer.withValues(alpha: 0.2),
+                  selectedColor: theme.colorScheme.primaryContainer.withValues(
+                    alpha: 0.6,
+                  ),
+                  backgroundColor: theme.colorScheme.primaryContainer
+                      .withValues(alpha: 0.2),
                   labelStyle: TextStyle(
-                    color:
-                        isSelected ? theme.colorScheme.primary : Colors.grey[800],
+                    color: isSelected
+                        ? theme.colorScheme.primary
+                        : Colors.grey[800],
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
@@ -415,14 +422,18 @@ class _ScreenSearchState extends State<ScreenSearch> {
         physics: const AlwaysScrollableScrollPhysics(),
         children: [
           const SizedBox(height: 80),
-          Icon(FontAwesomeIcons.triangleExclamation,
-              color: theme.colorScheme.error, size: 32),
+          Icon(
+            FontAwesomeIcons.triangleExclamation,
+            color: theme.colorScheme.error,
+            size: 32,
+          ),
           const SizedBox(height: 12),
           Text(
             _errorMessage!,
             textAlign: TextAlign.center,
-            style:
-                textTheme.bodyLarge?.copyWith(color: theme.colorScheme.error),
+            style: textTheme.bodyLarge?.copyWith(
+              color: theme.colorScheme.error,
+            ),
           ),
           const SizedBox(height: 12),
           Center(
@@ -436,17 +447,19 @@ class _ScreenSearchState extends State<ScreenSearch> {
     }
 
     if (_filteredGroups.isEmpty) {
-      final message = _query.isEmpty &&
-              _selectedTraits.isEmpty &&
-              _selectedMajors.isEmpty
+      final message =
+          _query.isEmpty && _selectedTraits.isEmpty && _selectedMajors.isEmpty
           ? 'No groups available.'
           : 'No groups match your filters.';
       return ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         children: [
           const SizedBox(height: 80),
-          Icon(FontAwesomeIcons.peopleGroup,
-              color: theme.colorScheme.primary, size: 32),
+          Icon(
+            FontAwesomeIcons.peopleGroup,
+            color: theme.colorScheme.primary,
+            size: 32,
+          ),
           const SizedBox(height: 12),
           Text(
             message,
@@ -468,8 +481,8 @@ class _ScreenSearchState extends State<ScreenSearch> {
         final subtitle = description.isNotEmpty
             ? description
             : memberCount > 0
-                ? '$memberCount member${memberCount == 1 ? '' : 's'}'
-                : '';
+            ? '$memberCount member${memberCount == 1 ? '' : 's'}'
+            : '';
         final traitsPreview = group.personalityTraits.take(2).join(', ');
         final majorsPreview = group.majors.take(2).join(', ');
 
@@ -485,8 +498,10 @@ class _ScreenSearchState extends State<ScreenSearch> {
               // TODO: navigate to group detail page
             },
             child: ListTile(
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 8,
+              ),
               leading: CircleAvatar(
                 radius: 24,
                 backgroundColor: theme.colorScheme.primaryContainer,
@@ -503,20 +518,23 @@ class _ScreenSearchState extends State<ScreenSearch> {
                   if (subtitle.isNotEmpty)
                     Text(
                       subtitle,
-                      style:
-                          textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
+                      style: textTheme.bodySmall?.copyWith(
+                        color: Colors.grey[600],
+                      ),
                     ),
                   if (traitsPreview.isNotEmpty)
                     Text(
                       'Traits: $traitsPreview',
-                      style:
-                          textTheme.bodySmall?.copyWith(color: Colors.grey[500]),
+                      style: textTheme.bodySmall?.copyWith(
+                        color: Colors.grey[500],
+                      ),
                     ),
                   if (majorsPreview.isNotEmpty)
                     Text(
                       'Majors: $majorsPreview',
-                      style:
-                          textTheme.bodySmall?.copyWith(color: Colors.grey[500]),
+                      style: textTheme.bodySmall?.copyWith(
+                        color: Colors.grey[500],
+                      ),
                     ),
                 ],
               ),

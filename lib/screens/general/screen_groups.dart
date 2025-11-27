@@ -25,6 +25,8 @@ import 'package:campusmate/db_helpers/db_groups.dart';
 import 'package:campusmate/models/groups.dart';
 import 'package:campusmate/constants/group_filters.dart';
 
+// Go
+
 //////////////////////////////////////////////////////////////////////////
 // StateFUL widget which manages state. Simply initializes the state object.
 //////////////////////////////////////////////////////////////////////////
@@ -45,10 +47,10 @@ class _ScreenGroupsState extends ConsumerState<ScreenGroups> {
   bool _isInit = true;
 
   // List of selectable traits to filter groups by
-   final List<String> selectableTraits = PersonalityTraits.traits;
+  final List<String> selectableTraits = PersonalityTraits.traits;
 
   // List of selected personality traits to filter groups by
-   final List<String> selectedTraits = [];
+  final List<String> selectedTraits = [];
 
   ////////////////////////////////////////////////////////////////
   // Runs the following code once upon initialization
@@ -164,9 +166,7 @@ class _ScreenGroupsState extends ConsumerState<ScreenGroups> {
           final isOwner = group.ownerId == currentUserId;
           return Card(
             child: ListTile(
-              leading: const CircleAvatar(
-                backgroundImage: AssetImage('assets/images/group_pfpic.png'),
-              ),
+              leading: const CircleAvatar(child: Icon(Icons.group)),
               title: Text(group.groupName),
               subtitle: Text(
                 group.groupDescription.isEmpty
