@@ -37,6 +37,7 @@ class UserProfile {
   int _accountCreationTime = 0;
   DateTime _dateLastPasswordChange = DateTime.now().add(const Duration(days: -365));
   AccountCreationStep _accountCreationStep = AccountCreationStep.ACC_STEP_ONBOARDING_PROFILE_CONTACT_INFO;
+  List<String> _personalityTraits = [];
 
   ////////////////////////////////////////////////////////////////////////
   // CONSTRUCTORS
@@ -62,6 +63,7 @@ class UserProfile {
     _permissionLevel = PermissionLevel.PRODUCTION;
     _accountCreationTime = 0;
     _accountCreationStep = AccountCreationStep.ACC_STEP_ONBOARDING_PROFILE_CONTACT_INFO;
+    _personalityTraits = [];
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -85,6 +87,7 @@ class UserProfile {
       jsonObject["account_creation_step"] ??
           getStringFromStep(AccountCreationStep.ACC_STEP_ONBOARDING_PROFILE_CONTACT_INFO),
     );
+    personalityTraits = List<String>.from(jsonObject["personality_traits"] ?? []);
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -101,6 +104,7 @@ class UserProfile {
   set accountCreationStep(AccountCreationStep value) => _accountCreationStep = value;
   set bio(String value) => _bio = value;
   set major(String value) => _major = value;
+  set personalityTraits(List<String> value) => _personalityTraits = value;
 
   ////////////////////////////////////////////////////////////////////////
   // GETTERS
@@ -111,6 +115,7 @@ class UserProfile {
   String get email => _email;
   String get bio => _bio;
   String get major => _major;
+  List<String> get personalityTraits => _personalityTraits;
 
   PermissionLevel get permissionLevel => _permissionLevel;
   int get accountCreationTime => _accountCreationTime;
@@ -188,6 +193,7 @@ class UserProfile {
     jsonObject["account_creation_step"] = getStringFromStep(accountCreationStep);
     jsonObject["bio"] = bio;
     jsonObject["major"] = major;
+    jsonObject["personality_traits"] = personalityTraits;
 
     // Return the JSON object
     return jsonObject;
