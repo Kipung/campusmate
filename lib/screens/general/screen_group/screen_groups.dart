@@ -203,10 +203,12 @@ class _ScreenGroupsState extends ConsumerState<ScreenGroups> {
     return Scaffold(
       // Floating action button to create a new study group
       floatingActionButton: FloatingActionButton(
-        shape: ShapeBorder.lerp(CircleBorder(), StadiumBorder(), 0.5),
+        shape: ShapeBorder.lerp(const CircleBorder(), const StadiumBorder(), 0.5),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Theme.of(context).colorScheme.onPrimary,
         onPressed: () => openStudyGroupScreen(),
-        splashColor: Theme.of(context).primaryColor,
-        child: Icon(FontAwesomeIcons.plus),
+        splashColor: Theme.of(context).colorScheme.primaryContainer,
+        child: const Icon(FontAwesomeIcons.plus),
       ),
       body: buildBody(),
     );

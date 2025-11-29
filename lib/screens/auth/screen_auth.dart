@@ -425,7 +425,7 @@ class _ScreenAuthState extends ConsumerState<ScreenAuth> {
                     padding: const EdgeInsets.all(0),
                     child: Center(
                       child: Image.asset(
-                        "assets/images/logo.png",
+                        "assets/images/draft_logo.png",
                         width: MediaQuery.of(context).size.width * 0.8,
                       ),
                     ),

@@ -29,6 +29,7 @@ import '../../util/logging/app_logger.dart';
 import '../../providers/provider_auth.dart';
 import '../../models/user_profile.dart';
 import '../../theme/colors.dart';
+import '../../constants/group_filters.dart';
 import '../../main.dart';
 
 //////////////////////////////////////////////////////////////////
@@ -509,12 +510,7 @@ class _ScreenProfileSetupState extends ConsumerState<ScreenProfileSetup> {
                       decoration: const InputDecoration(labelText: 'Major'),
                       items: <String>[
                         '',
-                        'Computer Science',
-                        'Biology',
-                        'Business',
-                        'Psychology',
-                        'Engineering',
-                        'Undeclared'
+                        ...AcademicMajors.majors,
                       ].map((maj) {
                         return DropdownMenuItem<String>(
                           value: maj,
