@@ -558,13 +558,15 @@ class _ScreenHomeState extends ConsumerState<ScreenHome> {
                   );
                 }
 
-                return ElevatedButton(
-                  onPressed: () => _friendService.sendFriendRequest(
-                    context: context,
-                    myUid: currentUid,
-                    targetUid: userId,
+                return Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => _friendService.sendFriendRequest(
+                      context: context,
+                      myUid: currentUid,
+                      targetUid: userId,
+                    ),
+                    child: const Text('Add Friend'),
                   ),
-                  child: const Text('Add Friend'),
                 );
               },
             );
