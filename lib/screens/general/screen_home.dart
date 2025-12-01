@@ -13,13 +13,12 @@
 // Flutter imports
 import 'dart:async';
 import 'dart:convert';
-import 'dart:math';
-
 // Flutter external package imports
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 // App relative file imports
 import '../../db_helpers/firestore_keys.dart';
@@ -45,6 +44,7 @@ class _ScreenHomeState extends ConsumerState<ScreenHome> {
   bool _isInit = true;
   late final Stream<QuerySnapshot<Map<String, dynamic>>>
   _recommendedUsersStream;
+  late final Future<_DailyQuote> _dailyQuoteFuture;
   final FriendService _friendService = FriendService();
   UserProfile? _currentUserProfile;
   bool _statsLoading = true;
@@ -75,6 +75,7 @@ class _ScreenHomeState extends ConsumerState<ScreenHome> {
         .collection(FS_COL_IC_USER_PROFILES)
         .limit(12)
         .snapshots();
+    _dailyQuoteFuture = _fetchDailyQuote();
     super.initState();
   }
 
@@ -152,6 +153,47 @@ class _ScreenHomeState extends ConsumerState<ScreenHome> {
         });
   }
 
+  Future<_DailyQuote> _fetchDailyQuote() async {
+    final uri = Uri.parse('https://type.fit/api/quotes');
+    try {
+      final response = await http.get(uri);
+      if (response.statusCode != 200) {
+        throw Exception('Unexpected status: ${response.statusCode}');
+      }
+      final List<dynamic> quotes = jsonDecode(response.body) as List<dynamic>;
+      if (quotes.isEmpty) {
+        throw Exception('Quote list was empty');
+      }
+      final now = DateTime.now().toUtc();
+      final dayIndex =
+          now.difference(DateTime.utc(now.year)).inDays % quotes.length;
+      final dynamic quoteEntry = quotes[dayIndex];
+
+      String quoteText;
+      String authorText;
+      if (quoteEntry is Map<String, dynamic>) {
+        quoteText = (quoteEntry['text'] ?? '').toString().trim();
+        authorText = (quoteEntry['author'] ?? 'Unknown').toString().trim();
+      } else {
+        quoteText = quoteEntry.toString();
+        authorText = 'Unknown';
+      }
+
+      if (quoteText.isEmpty) {
+        quoteText = 'Keep pushing forward.';
+      }
+      if (authorText.isEmpty) {
+        authorText = 'Unknown';
+      }
+
+      return _DailyQuote(quote: quoteText, author: authorText);
+    } catch (error, stackTrace) {
+      debugPrint('Failed to fetch motivational quote: $error');
+      debugPrint('$stackTrace');
+      rethrow;
+    }
+  }
+
   @override
   void dispose() {
     _profileSub?.cancel();
@@ -215,10 +257,8 @@ class _ScreenHomeState extends ConsumerState<ScreenHome> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              FutureBuilder<String>(
-                future: DefaultAssetBundle.of(
-                  context,
-                ).loadString('assets/motivational_quotes.json'),
+              FutureBuilder<_DailyQuote>(
+                future: _dailyQuoteFuture,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState != ConnectionState.done) {
                     return const SizedBox(
@@ -227,36 +267,51 @@ class _ScreenHomeState extends ConsumerState<ScreenHome> {
                     );
                   }
                   if (snapshot.hasError || snapshot.data == null) {
-                    return const Text(
-                      'Could not load quote',
-                      style: TextStyle(fontSize: 20.0),
-                      textAlign: TextAlign.center,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: const [
+                        Text(
+                          'Could not load quote',
+                          style: TextStyle(fontSize: 20.0),
+                          textAlign: TextAlign.center,
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        SizedBox(height: 8.0),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: Text(
+                            '- Unknown',
+                            style: TextStyle(fontSize: 16.0),
+                            textAlign: TextAlign.right,
+                          ),
+                        ),
+                      ],
                     );
                   }
-                  final List<dynamic> quotes = jsonDecode(snapshot.data!);
-                  final quoteText = quotes.isNotEmpty
-                      ? quotes[Random().nextInt(quotes.length)].toString()
-                      : 'No quotes available';
-
-                  return Text(
-                    quoteText,
-                    style: const TextStyle(fontSize: 20.0),
-                    textAlign: TextAlign.center,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
+                  final quote = snapshot.data!;
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        quote.quote,
+                        style: const TextStyle(fontSize: 20.0),
+                        textAlign: TextAlign.center,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 8.0),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          '- ${quote.author}',
+                          style: const TextStyle(fontSize: 16.0),
+                          textAlign: TextAlign.right,
+                        ),
+                      ),
+                    ],
                   );
                 },
-              ),
-              const SizedBox(height: 8.0),
-              const Align(
-                alignment: Alignment.centerRight,
-                child: Text(
-                  '- Somebody Famous',
-                  style: TextStyle(fontSize: 16.0),
-                  textAlign: TextAlign.right,
-                ),
               ),
             ],
           ),
@@ -724,6 +779,16 @@ class _ScreenHomeState extends ConsumerState<ScreenHome> {
         .limit(1)
         .snapshots();
   }
+}
+
+class _DailyQuote {
+  final String quote;
+  final String author;
+
+  const _DailyQuote({
+    required this.quote,
+    required this.author,
+  });
 }
 
 class _QuickStatCard extends StatelessWidget {
