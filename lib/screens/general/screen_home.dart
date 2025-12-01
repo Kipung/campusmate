@@ -44,7 +44,7 @@ class _ScreenHomeState extends ConsumerState<ScreenHome> {
   // The "instance variables" managed in this state
   bool _isInit = true;
   late final Stream<QuerySnapshot<Map<String, dynamic>>>
-      _recommendedUsersStream;
+  _recommendedUsersStream;
   final FriendService _friendService = FriendService();
   UserProfile? _currentUserProfile;
   bool _statsLoading = true;
@@ -131,12 +131,12 @@ class _ScreenHomeState extends ConsumerState<ScreenHome> {
         .where('members', arrayContains: user.uid)
         .snapshots()
         .listen((snapshot) {
-      if (!mounted) return;
-      setState(() {
-        _groupsJoined = snapshot.size;
-        _statsLoading = false;
-      });
-    });
+          if (!mounted) return;
+          setState(() {
+            _groupsJoined = snapshot.size;
+            _statsLoading = false;
+          });
+        });
 
     _pendingSub = FirebaseFirestore.instance
         .collection('friend_requests')
@@ -144,12 +144,12 @@ class _ScreenHomeState extends ConsumerState<ScreenHome> {
         .where('status', isEqualTo: 'pending')
         .snapshots()
         .listen((snapshot) {
-      if (!mounted) return;
-      setState(() {
-        _pendingRequests = snapshot.size;
-        _statsLoading = false;
-      });
-    });
+          if (!mounted) return;
+          setState(() {
+            _pendingRequests = snapshot.size;
+            _statsLoading = false;
+          });
+        });
   }
 
   @override
@@ -168,31 +168,33 @@ class _ScreenHomeState extends ConsumerState<ScreenHome> {
   Widget build(BuildContext context) {
     // Return the scaffold
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildWelcomeHeader(context),
-            const SizedBox(height: 18.0),
-            _buildQuoteCard(context),
-            const SizedBox(height: 22.0),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'People You May Know',
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                ],
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildWelcomeHeader(context),
+              const SizedBox(height: 18.0),
+              _buildQuoteCard(context),
+              const SizedBox(height: 22.0),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'People You May Know',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 8.0),
-            // Horizontal scrollable list of RecommendedUser widgets
-            _buildRecommendedUsersCarousel(),
-          ],
+              const SizedBox(height: 8.0),
+              // Horizontal scrollable list of RecommendedUser widgets
+              Expanded(child: _buildRecommendedUsersCarousel()),
+            ],
+          ),
         ),
       ),
     );
@@ -206,10 +208,7 @@ class _ScreenHomeState extends ConsumerState<ScreenHome> {
           width: double.infinity,
           padding: const EdgeInsets.all(16.0),
           decoration: BoxDecoration(
-            border: Border.all(
-              color: const Color(0xFFD5C7AD),
-              width: 2.0,
-            ),
+            border: Border.all(color: const Color(0xFFD5C7AD), width: 2.0),
             borderRadius: BorderRadius.circular(12.0),
             color: const Color(0xFFF1EAD8),
           ),
@@ -272,8 +271,9 @@ class _ScreenHomeState extends ConsumerState<ScreenHome> {
     final greetingName = (firstName != null && firstName.isNotEmpty)
         ? firstName
         : (FirebaseAuth.instance.currentUser?.email ?? 'there');
-    final avatarLetter =
-        greetingName.isNotEmpty ? greetingName[0].toUpperCase() : '?';
+    final avatarLetter = greetingName.isNotEmpty
+        ? greetingName[0].toUpperCase()
+        : '?';
 
     return Container(
       width: double.infinity,
@@ -393,7 +393,10 @@ class _ScreenHomeState extends ConsumerState<ScreenHome> {
         }
 
         final docs = snapshot.data?.docs ?? [];
-        final users = docs.where((doc) => doc.id != currentUid).take(10).toList();
+        final users = docs
+            .where((doc) => doc.id != currentUid)
+            .take(10)
+            .toList();
         if (users.isEmpty) {
           return SizedBox(
             height: 120,
@@ -423,7 +426,9 @@ class _ScreenHomeState extends ConsumerState<ScreenHome> {
                   ? 'CampusMate User'
                   : '$firstName $lastName'.trim();
               final tagsRaw = data['personality_traits'];
-              final tags = tagsRaw is List ? List<String>.from(tagsRaw) : <String>[];
+              final tags = tagsRaw is List
+                  ? List<String>.from(tagsRaw)
+                  : <String>[];
 
               return Material(
                 color: Colors.transparent,
@@ -521,8 +526,9 @@ class _ScreenHomeState extends ConsumerState<ScreenHome> {
                     ConnectionState.waiting) {
                   return const SizedBox(
                     height: 40,
-                    child:
-                        Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                    child: Center(
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
                   );
                 }
                 final incomingDocs = incomingSnapshot.data?.docs ?? [];
@@ -568,17 +574,15 @@ class _ScreenHomeState extends ConsumerState<ScreenHome> {
     );
   }
 
-  void _showUserProfileSheet(
-    String userId,
-    Map<String, dynamic> userData,
-  ) {
+  void _showUserProfileSheet(String userId, Map<String, dynamic> userData) {
     final currentUid = FirebaseAuth.instance.currentUser?.uid;
     if (currentUid == null || currentUid == userId) return;
 
     final firstName = (userData['first_name'] ?? '').toString();
     final lastName = (userData['last_name'] ?? '').toString();
-    final displayName =
-        '$firstName $lastName'.trim().isEmpty ? 'CampusMate User' : '$firstName $lastName'.trim();
+    final displayName = '$firstName $lastName'.trim().isEmpty
+        ? 'CampusMate User'
+        : '$firstName $lastName'.trim();
     final major = (userData['major'] ?? 'Undeclared').toString();
     final bio = (userData['bio'] ?? '').toString();
 
@@ -610,7 +614,10 @@ class _ScreenHomeState extends ConsumerState<ScreenHome> {
                     radius: 32,
                     child: Text(
                       displayName.isEmpty ? '?' : displayName[0].toUpperCase(),
-                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
@@ -663,7 +670,9 @@ class _ScreenHomeState extends ConsumerState<ScreenHome> {
                       builder: (context, requestSnapshot) {
                         if (requestSnapshot.connectionState ==
                             ConnectionState.waiting) {
-                          return const Center(child: CircularProgressIndicator());
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
                         }
                         final pendingDocs = requestSnapshot.data?.docs ?? [];
                         final hasPending = pendingDocs.isNotEmpty;
@@ -684,7 +693,9 @@ class _ScreenHomeState extends ConsumerState<ScreenHome> {
                                 );
                               }
                             },
-                            child: Text(hasPending ? 'Cancel Request' : 'Add Friend'),
+                            child: Text(
+                              hasPending ? 'Cancel Request' : 'Add Friend',
+                            ),
                           ),
                         );
                       },
@@ -732,9 +743,7 @@ class _QuickStatCard extends StatelessWidget {
         color: Colors.white.withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: highlight
-              ? Colors.white
-              : Colors.white.withValues(alpha: 0.4),
+          color: highlight ? Colors.white : Colors.white.withValues(alpha: 0.4),
         ),
       ),
       child: Column(
@@ -742,17 +751,17 @@ class _QuickStatCard extends StatelessWidget {
         children: [
           Text(
             label,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: Colors.white70,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.labelLarge?.copyWith(color: Colors.white70),
           ),
           const SizedBox(height: 4),
           Text(
             value,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),
