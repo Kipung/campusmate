@@ -24,6 +24,7 @@ import 'package:flutter/material.dart';
 // App relative file imports
 import '../../db_helpers/firestore_keys.dart';
 import '../../services/friend_service.dart';
+import '../../models/user_profile.dart';
 import '../../widgets/general/recommended_user.dart';
 
 //////////////////////////////////////////////////////////////////////////
@@ -43,8 +44,17 @@ class _ScreenHomeState extends ConsumerState<ScreenHome> {
   // The "instance variables" managed in this state
   bool _isInit = true;
   late final Stream<QuerySnapshot<Map<String, dynamic>>>
-      _recommendedUsersStream;
+  _recommendedUsersStream;
   final FriendService _friendService = FriendService();
+  UserProfile? _currentUserProfile;
+  bool _statsLoading = true;
+  int _groupsJoined = 0;
+  int _friendCount = 0;
+  int _pendingRequests = 0;
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _profileSub;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _friendsSub;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _groupsSub;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _pendingSub;
 
   ////////////////////////////////////////////////////////////////
   // Runs the following code once upon initialization
@@ -71,7 +81,85 @@ class _ScreenHomeState extends ConsumerState<ScreenHome> {
   ////////////////////////////////////////////////////////////////
   // Initializes state variables and resources
   ////////////////////////////////////////////////////////////////
-  Future<void> _init() async {}
+  Future<void> _init() async {
+    _setupDashboardListeners();
+  }
+
+  void _setupDashboardListeners() {
+    _profileSub?.cancel();
+    _friendsSub?.cancel();
+    _groupsSub?.cancel();
+    _pendingSub?.cancel();
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      if (!mounted) return;
+      setState(() {
+        _statsLoading = false;
+      });
+      return;
+    }
+
+    final profileDocRef = FirebaseFirestore.instance
+        .collection(FS_COL_IC_USER_PROFILES)
+        .doc(user.uid);
+    _profileSub = profileDocRef.snapshots().listen((snapshot) {
+      if (!mounted) return;
+      if (snapshot.data() != null) {
+        final profile = UserProfile.defFromJsonDbObject(
+          snapshot.data()!,
+          snapshot.id,
+        );
+        setState(() {
+          _currentUserProfile = profile;
+          _statsLoading = false;
+        });
+      }
+    });
+
+    final friendsCol = profileDocRef.collection('friends');
+    _friendsSub = friendsCol.snapshots().listen((snapshot) {
+      if (!mounted) return;
+      setState(() {
+        _friendCount = snapshot.size;
+        _statsLoading = false;
+      });
+    });
+
+    _groupsSub = FirebaseFirestore.instance
+        .collection(FS_COL_IC_GROUPS)
+        .where('members', arrayContains: user.uid)
+        .snapshots()
+        .listen((snapshot) {
+          if (!mounted) return;
+          setState(() {
+            _groupsJoined = snapshot.size;
+            _statsLoading = false;
+          });
+        });
+
+    _pendingSub = FirebaseFirestore.instance
+        .collection('friend_requests')
+        .where('to', isEqualTo: user.uid)
+        .where('status', isEqualTo: 'pending')
+        .snapshots()
+        .listen((snapshot) {
+          if (!mounted) return;
+          setState(() {
+            _pendingRequests = snapshot.size;
+            _statsLoading = false;
+          });
+        });
+  }
+
+  @override
+  void dispose() {
+    _profileSub?.cancel();
+    _friendsSub?.cancel();
+    _groupsSub?.cancel();
+    _pendingSub?.cancel();
+    super.dispose();
+  }
 
   //////////////////////////////////////////////////////////////////////////
   // Primary Flutter method overridden which describes the layout and bindings for this widget.
@@ -80,105 +168,203 @@ class _ScreenHomeState extends ConsumerState<ScreenHome> {
   Widget build(BuildContext context) {
     // Return the scaffold
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Quote card
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Container(
-                  padding: const EdgeInsets.all(16.0),
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: const Color(0xFFD5C7AD),
-                      width: 2.0,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildWelcomeHeader(context),
+              const SizedBox(height: 18.0),
+              _buildQuoteCard(context),
+              const SizedBox(height: 22.0),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'People You May Know',
+                      style: Theme.of(context).textTheme.headlineSmall,
                     ),
-                    borderRadius: BorderRadius.circular(8.0),
-                    color: const Color(0xFFF1EAD8),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      FutureBuilder<String>(
-                        // load the bundled JSON asset (correct path & spelling)
-                        future: DefaultAssetBundle.of(
-                          context,
-                        ).loadString('assets/motivational_quotes.json'),
-                        // builder to display the quote or a loading/error state
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState !=
-                              ConnectionState.done) {
-                            return const SizedBox(
-                              height: 60,
-                              child: Center(child: CircularProgressIndicator()),
-                            );
-                          }
-                          // handle error or no data
-                          if (snapshot.hasError || snapshot.data == null) {
-                            return const Text(
-                              'Could not load quote',
-                              style: TextStyle(fontSize: 24.0),
-                              textAlign: TextAlign.center,
-                              maxLines: 3,
-                              overflow: TextOverflow.ellipsis,
-                            );
-                          }
-                          // parse JSON and pick a random quote
-                          final List<dynamic> quotes = jsonDecode(
-                            snapshot.data!,
-                          );
-                          final quoteText = quotes.isNotEmpty
-                              ? quotes[Random().nextInt(quotes.length)]
-                                    .toString()
-                              : 'No quotes available';
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8.0),
+              // Horizontal scrollable list of RecommendedUser widgets
+              Expanded(child: _buildRecommendedUsersCarousel()),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
-                          return Text(
-                            quoteText,
-                            style: const TextStyle(fontSize: 24.0),
-                            textAlign: TextAlign.center,
-                            maxLines: 3,
-                            overflow: TextOverflow.ellipsis,
-                          );
-                        },
-                      ),
-                      SizedBox(height: 8.0),
-                      Text(
-                        '- Somebody Famous',
-                        style: TextStyle(fontSize: 18.0),
-                        textAlign: TextAlign.right,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
+  Widget _buildQuoteCard(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4.0),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16.0),
+          decoration: BoxDecoration(
+            border: Border.all(color: const Color(0xFFD5C7AD), width: 2.0),
+            borderRadius: BorderRadius.circular(12.0),
+            color: const Color(0xFFF1EAD8),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              FutureBuilder<String>(
+                future: DefaultAssetBundle.of(
+                  context,
+                ).loadString('assets/motivational_quotes.json'),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState != ConnectionState.done) {
+                    return const SizedBox(
+                      height: 60,
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+                  if (snapshot.hasError || snapshot.data == null) {
+                    return const Text(
+                      'Could not load quote',
+                      style: TextStyle(fontSize: 20.0),
+                      textAlign: TextAlign.center,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    );
+                  }
+                  final List<dynamic> quotes = jsonDecode(snapshot.data!);
+                  final quoteText = quotes.isNotEmpty
+                      ? quotes[Random().nextInt(quotes.length)].toString()
+                      : 'No quotes available';
+
+                  return Text(
+                    quoteText,
+                    style: const TextStyle(fontSize: 20.0),
+                    textAlign: TextAlign.center,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  );
+                },
+              ),
+              const SizedBox(height: 8.0),
+              const Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  '- Somebody Famous',
+                  style: TextStyle(fontSize: 16.0),
+                  textAlign: TextAlign.right,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWelcomeHeader(BuildContext context) {
+    final theme = Theme.of(context);
+    final firstName = _currentUserProfile?.firstName.trim();
+    final greetingName = (firstName != null && firstName.isNotEmpty)
+        ? firstName
+        : (FirebaseAuth.instance.currentUser?.email ?? 'there');
+    final avatarLetter = greetingName.isNotEmpty
+        ? greetingName[0].toUpperCase()
+        : '?';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            theme.colorScheme.primaryContainer.withValues(alpha: 0.9),
+            theme.colorScheme.primary.withValues(alpha: 0.85),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 32,
+                backgroundColor: Colors.white.withValues(alpha: 0.2),
+                child: Text(
+                  avatarLetter,
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
-            ),
-
-            const SizedBox(height: 16.0),
-
-            // Header left-aligned
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 4.0,
-                vertical: 6.0,
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Welcome back,',
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: Colors.white70,
+                      ),
+                    ),
+                    Text(
+                      greetingName,
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              child: Text(
-                'People You May Know',
-                style: Theme.of(context).textTheme.headlineSmall,
-                textAlign: TextAlign.left,
+            ],
+          ),
+          const SizedBox(height: 20),
+          if (_statsLoading)
+            const SizedBox(
+              height: 52,
+              child: Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
               ),
+            )
+          else
+            Row(
+              children: [
+                Expanded(
+                  child: _QuickStatCard(
+                    label: 'Groups',
+                    value: _groupsJoined.toString(),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _QuickStatCard(
+                    label: 'Friends',
+                    value: _friendCount.toString(),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _QuickStatCard(
+                    label: 'Requests',
+                    value: _pendingRequests.toString(),
+                    highlight: _pendingRequests > 0,
+                  ),
+                ),
+              ],
             ),
-
-            const SizedBox(height: 8.0),
-
-            // Horizontal scrollable list of RecommendedUser widgets
-            _buildRecommendedUsersCarousel(),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -207,7 +393,10 @@ class _ScreenHomeState extends ConsumerState<ScreenHome> {
         }
 
         final docs = snapshot.data?.docs ?? [];
-        final users = docs.where((doc) => doc.id != currentUid).take(10).toList();
+        final users = docs
+            .where((doc) => doc.id != currentUid)
+            .take(10)
+            .toList();
         if (users.isEmpty) {
           return SizedBox(
             height: 120,
@@ -221,7 +410,7 @@ class _ScreenHomeState extends ConsumerState<ScreenHome> {
         }
 
         return SizedBox(
-          height: 220,
+          height: 250,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 4.0),
@@ -233,11 +422,29 @@ class _ScreenHomeState extends ConsumerState<ScreenHome> {
               final firstName = (data['first_name'] ?? '').toString();
               final lastName = (data['last_name'] ?? '').toString();
               final major = (data['major'] ?? 'Undeclared').toString();
-              final displayName = '$firstName $lastName'.trim();
-              return RecommendedUser(
-                displayName: displayName.isEmpty ? 'CampusMate User' : displayName,
-                subtitle: major.isEmpty ? 'Undeclared' : major,
-                onViewProfile: () => _showUserProfileSheet(doc.id, data),
+              final displayName = '$firstName $lastName'.trim().isEmpty
+                  ? 'CampusMate User'
+                  : '$firstName $lastName'.trim();
+              final tagsRaw = data['personality_traits'];
+              final tags = tagsRaw is List
+                  ? List<String>.from(tagsRaw)
+                  : <String>[];
+
+              return Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(18),
+                  onTap: () => _showUserProfileSheet(doc.id, data),
+                  child: RecommendedUser(
+                    displayName: displayName,
+                    subtitle: major.isEmpty ? 'Undeclared' : major,
+                    tags: tags,
+                    actionArea: _buildRecommendationActions(
+                      currentUid: currentUid,
+                      userId: doc.id,
+                    ),
+                  ),
+                ),
               );
             },
           ),
@@ -246,17 +453,138 @@ class _ScreenHomeState extends ConsumerState<ScreenHome> {
     );
   }
 
-  void _showUserProfileSheet(
-    String userId,
-    Map<String, dynamic> userData,
-  ) {
+  Widget _buildRecommendationActions({
+    required String? currentUid,
+    required String userId,
+  }) {
+    if (currentUid == null || currentUid == userId) {
+      return const SizedBox.shrink();
+    }
+
+    final friendDocStream = FirebaseFirestore.instance
+        .collection(FS_COL_IC_USER_PROFILES)
+        .doc(currentUid)
+        .collection('friends')
+        .doc(userId)
+        .snapshots();
+
+    final outgoingStream = _getPendingRequestStream(currentUid, userId);
+    final incomingStream = _getPendingRequestStream(userId, currentUid);
+
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: friendDocStream,
+      builder: (context, friendSnapshot) {
+        if (friendSnapshot.connectionState == ConnectionState.waiting) {
+          return const SizedBox(
+            height: 40,
+            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          );
+        }
+
+        final isFriend = friendSnapshot.data?.exists ?? false;
+        if (isFriend) {
+          return ElevatedButton.icon(
+            onPressed: () => _friendService.removeFriend(
+              context: context,
+              myUid: currentUid,
+              otherUid: userId,
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: Theme.of(context).colorScheme.primary,
+            ),
+            icon: const Icon(Icons.person_remove_alt_1),
+            label: const Text('Remove Friend'),
+          );
+        }
+
+        return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+          stream: outgoingStream,
+          builder: (context, outgoingSnapshot) {
+            if (outgoingSnapshot.connectionState == ConnectionState.waiting) {
+              return const SizedBox(
+                height: 40,
+                child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+              );
+            }
+
+            final outgoingDocs = outgoingSnapshot.data?.docs ?? [];
+            if (outgoingDocs.isNotEmpty) {
+              return OutlinedButton(
+                onPressed: () => _friendService.cancelFriendRequest(
+                  context: context,
+                  requestId: outgoingDocs.first.id,
+                ),
+                child: const Text('Cancel Request'),
+              );
+            }
+
+            return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: incomingStream,
+              builder: (context, incomingSnapshot) {
+                if (incomingSnapshot.connectionState ==
+                    ConnectionState.waiting) {
+                  return const SizedBox(
+                    height: 40,
+                    child: Center(
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  );
+                }
+                final incomingDocs = incomingSnapshot.data?.docs ?? [];
+                if (incomingDocs.isNotEmpty) {
+                  final requestId = incomingDocs.first.id;
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      ElevatedButton(
+                        onPressed: () => _friendService.acceptFriendRequest(
+                          context: context,
+                          requestId: requestId,
+                          myUid: currentUid,
+                          otherUid: userId,
+                        ),
+                        child: const Text('Accept Request'),
+                      ),
+                      const SizedBox(height: 6),
+                      TextButton(
+                        onPressed: () => _friendService.rejectFriendRequest(
+                          context: context,
+                          requestId: requestId,
+                        ),
+                        child: const Text('Ignore'),
+                      ),
+                    ],
+                  );
+                }
+
+                return Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => _friendService.sendFriendRequest(
+                      context: context,
+                      myUid: currentUid,
+                      targetUid: userId,
+                    ),
+                    child: const Text('Add Friend'),
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showUserProfileSheet(String userId, Map<String, dynamic> userData) {
     final currentUid = FirebaseAuth.instance.currentUser?.uid;
     if (currentUid == null || currentUid == userId) return;
 
     final firstName = (userData['first_name'] ?? '').toString();
     final lastName = (userData['last_name'] ?? '').toString();
-    final displayName =
-        '$firstName $lastName'.trim().isEmpty ? 'CampusMate User' : '$firstName $lastName'.trim();
+    final displayName = '$firstName $lastName'.trim().isEmpty
+        ? 'CampusMate User'
+        : '$firstName $lastName'.trim();
     final major = (userData['major'] ?? 'Undeclared').toString();
     final bio = (userData['bio'] ?? '').toString();
 
@@ -288,7 +616,10 @@ class _ScreenHomeState extends ConsumerState<ScreenHome> {
                     radius: 32,
                     child: Text(
                       displayName.isEmpty ? '?' : displayName[0].toUpperCase(),
-                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
@@ -341,7 +672,9 @@ class _ScreenHomeState extends ConsumerState<ScreenHome> {
                       builder: (context, requestSnapshot) {
                         if (requestSnapshot.connectionState ==
                             ConnectionState.waiting) {
-                          return const Center(child: CircularProgressIndicator());
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
                         }
                         final pendingDocs = requestSnapshot.data?.docs ?? [];
                         final hasPending = pendingDocs.isNotEmpty;
@@ -362,7 +695,9 @@ class _ScreenHomeState extends ConsumerState<ScreenHome> {
                                 );
                               }
                             },
-                            child: Text(hasPending ? 'Cancel Request' : 'Add Friend'),
+                            child: Text(
+                              hasPending ? 'Cancel Request' : 'Add Friend',
+                            ),
                           ),
                         );
                       },
@@ -388,5 +723,50 @@ class _ScreenHomeState extends ConsumerState<ScreenHome> {
         .where('status', isEqualTo: 'pending')
         .limit(1)
         .snapshots();
+  }
+}
+
+class _QuickStatCard extends StatelessWidget {
+  const _QuickStatCard({
+    required this.label,
+    required this.value,
+    this.highlight = false,
+  });
+
+  final String label;
+  final String value;
+  final bool highlight;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: highlight ? Colors.white : Colors.white.withValues(alpha: 0.4),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: Theme.of(
+              context,
+            ).textTheme.labelLarge?.copyWith(color: Colors.white70),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

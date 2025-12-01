@@ -231,13 +231,30 @@ class _ScreenSearchState extends State<ScreenSearch> {
 
   List<UserProfile> _filterMembers(List<UserProfile> source) {
     final query = _query.toLowerCase();
+    final traitsLower = _selectedTraits.map((t) => t.toLowerCase()).toList();
+    final majorsLower = _selectedMajors.map((m) => m.toLowerCase()).toList();
 
     final filtered = source.where((member) {
-      final fullName =
-          '${member.firstName} ${member.lastName}'.toLowerCase();
+      final fullName = '${member.firstName} ${member.lastName}'.toLowerCase();
       if (query.isNotEmpty && !fullName.contains(query)) {
         return false;
       }
+
+      if (majorsLower.isNotEmpty) {
+        final memberMajor = member.major.toLowerCase();
+        if (!majorsLower.contains(memberMajor)) {
+          return false;
+        }
+      }
+
+      if (traitsLower.isNotEmpty) {
+        final memberTraits =
+            member.personalityTraits.map((t) => t.toLowerCase()).toSet();
+        if (!traitsLower.every(memberTraits.contains)) {
+          return false;
+        }
+      }
+
       return true;
     }).toList()
       ..sort(
@@ -261,41 +278,6 @@ class _ScreenSearchState extends State<ScreenSearch> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9F9FB),
-      floatingActionButton: Container(
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        boxShadow: [
-        BoxShadow(
-          color: theme.colorScheme.primary.withValues(alpha: 0.4),
-          blurRadius: 10,
-          offset: const Offset(0, 4),
-        ),
-        ],
-        gradient: LinearGradient(
-        colors: [
-          theme.colorScheme.primaryContainer,
-          theme.colorScheme.primary,
-        ],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        ),
-      ),
-      child: FloatingActionButton(
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        onPressed: () => Snackbar.show(
-        SnackbarDisplayType.SB_INFO,
-        'You clicked the floating button on the search screen!',
-        context,
-        ),
-        splashColor: theme.colorScheme.primary.withValues(alpha: 0.3),
-        child: const Icon(
-        FontAwesomeIcons.plus,
-        color: Colors.white,
-        size: 26,
-        ),
-      ),
-      ),
       body: SafeArea(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -358,7 +340,7 @@ class _ScreenSearchState extends State<ScreenSearch> {
           child: _loading
             ? const Center(child: CircularProgressIndicator())
             : RefreshIndicator(
-              onRefresh: _loadGroups,
+              onRefresh: _searchMode ? _loadMembers : _loadGroups,
               child: _buildResultsList(theme, textTheme),
               ),
           ),
@@ -389,7 +371,7 @@ class _ScreenSearchState extends State<ScreenSearch> {
         decoration: InputDecoration(
           border: InputBorder.none,
           prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
-          hintText: 'Search groups by name',
+          hintText: _searchMode ? 'Search members by name' : 'Search groups by name',
           hintStyle: textTheme.bodyMedium?.copyWith(color: Colors.grey[500]),
           suffixIcon: _controller.text.isNotEmpty
               ? IconButton(

@@ -1,71 +1,98 @@
 import 'package:flutter/material.dart';
 
+/// Stylish card used to represent a recommended user with customizable
+/// action content supplied by the parent widget.
 class RecommendedUser extends StatelessWidget {
-  final String displayName;
-  final String subtitle;
-  final VoidCallback? onViewProfile;
-
   const RecommendedUser({
     super.key,
     required this.displayName,
     required this.subtitle,
-    this.onViewProfile,
+    this.tags,
+    this.actionArea,
   });
+
+  final String displayName;
+  final String subtitle;
+  final List<String>? tags;
+  final Widget? actionArea;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final avatarLetter =
+        displayName.trim().isNotEmpty ? displayName.trim()[0].toUpperCase() : '?';
+
     return Container(
-      width: 170,
-      padding: const EdgeInsets.symmetric(vertical: 18.0, horizontal: 16.0),
+      width: 210,
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFD5C7AD), width: 4.0),
-        borderRadius: BorderRadius.circular(12.0),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(
+          color: theme.colorScheme.primaryContainer.withValues(alpha: 0.6),
+        ),
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.account_circle, size: 64, color: Color(0xFF2D2D1F)),
-          const SizedBox(height: 12.0),
+          CircleAvatar(
+            radius: 30,
+            backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.14),
+            child: Text(
+              avatarLetter,
+              style: theme.textTheme.titleLarge?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
           Text(
             displayName,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF2D2D1F),
-            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
           ),
-          const SizedBox(height: 6.0),
+          const SizedBox(height: 4),
           Text(
             subtitle,
-            style: const TextStyle(
-              fontSize: 13,
-              color: Color(0xFF4D4D3A),
-            ),
             maxLines: 2,
-            textAlign: TextAlign.center,
-          ),
-          const Spacer(),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: onViewProfile,
-              style: ElevatedButton.styleFrom(
-                elevation: 0,
-                backgroundColor: const Color(0xFFD8DCC1),
-                foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-              ),
-              child: const Text(
-                'View Profile',
-                style: TextStyle(color: Colors.white),
-              ),
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: Colors.grey[600],
             ),
           ),
+          if (tags != null && tags!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: tags!
+                  .take(2)
+                  .map(
+                    (tag) => Chip(
+                      label: Text(tag, style: theme.textTheme.labelSmall),
+                      padding: EdgeInsets.zero,
+                      backgroundColor:
+                          theme.colorScheme.primaryContainer.withValues(alpha: 0.4),
+                      visualDensity: VisualDensity.compact,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  )
+                  .toList(),
+            ),
+          ],
+          const Spacer(),
+          if (actionArea != null) actionArea!,
         ],
       ),
     );
