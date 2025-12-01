@@ -4,8 +4,10 @@ import 'dart:collection';
 
 class ChatscrTextbar extends StatefulWidget {
   final ValueChanged<String>? onSend;
+  final VoidCallback? onPickImage;
+  final VoidCallback? onPickFile;
 
-  const ChatscrTextbar({super.key, this.onSend});
+  const ChatscrTextbar({super.key, this.onSend, this.onPickImage, this.onPickFile});
 
   @override
   State<ChatscrTextbar> createState() => _ChatscrTextbarState();
@@ -44,8 +46,14 @@ class _ChatscrTextbarState extends State<ChatscrTextbar> {
               ),
             ),
           ),
-          IconButton(onPressed: () {}, icon: const Icon(Icons.image)),
-          IconButton(onPressed: () {}, icon: const Icon(Icons.file_copy)),
+          IconButton(
+            onPressed: widget.onPickImage,
+            icon: const Icon(Icons.image),
+          ),
+          IconButton(
+            onPressed: widget.onPickFile,
+            icon: const Icon(Icons.attach_file),
+          ),
           IconButton(
             icon: const Icon(Icons.send),
             onPressed: () {
@@ -59,7 +67,7 @@ class _ChatscrTextbarState extends State<ChatscrTextbar> {
 
               // Optionally keep a local queue of bubbles (not displayed here)
               setState(() {
-                queue.add(TextBubble(displayedText: text));
+                queue.add(UsrTextBubble(displayedText: text));
               });
 
               userTextController.clear();

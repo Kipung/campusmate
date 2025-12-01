@@ -1,11 +1,18 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 
 import '../util/logging/app_logger.dart';
 import 'firestore_keys.dart';
 
 class DbChat {
+  // Current user's UID getter
+  static String? get currentUid => FirebaseAuth.instance.currentUser?.uid;
+
   // 1) Create or reuse a direct chat between the current user and otherUserId
   static Future<String> createDirectChat(String otherUserId) async {
     final user = FirebaseAuth.instance.currentUser;
@@ -132,6 +139,132 @@ class DbChat {
       }
       txn.update(chatDoc, {
         'last_message': text,
+        'last_updated': FieldValue.serverTimestamp(),
+        'unread': unread,
+      });
+    });
+  }
+
+  // 2b) Send an image message; upload to Storage then write message with image_url
+  static Future<void> sendMessageImage(String chatId, XFile file) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      throw Exception('Not signed in');
+    }
+    final uid = user.uid;
+    final db = FirebaseFirestore.instance;
+    final chatDoc = db.collection(FS_COL_CHATS).doc(chatId);
+    final msgCol = chatDoc.collection(FS_COL_CHAT_MESSAGES);
+
+    // Upload to Storage first
+    final msgRef = msgCol.doc();
+    final storageRef = FirebaseStorage.instance
+        .ref()
+        .child('chats/$chatId/messages/${msgRef.id}.jpg');
+    final bytes = await file.readAsBytes();
+    await storageRef.putData(
+      bytes,
+      SettableMetadata(contentType: 'image/jpeg'),
+    );
+    final downloadUrl = await storageRef.getDownloadURL();
+
+    await db.runTransaction((txn) async {
+      final chatSnap = await txn.get(chatDoc);
+      if (!chatSnap.exists) {
+        throw Exception('Chat not found: $chatId');
+      }
+      final chatData =
+          (chatSnap.data() as Map<String, dynamic>?) ?? <String, dynamic>{};
+      final participants = List<String>.from(
+        chatData['participants'] ?? <String>[],
+      );
+
+      txn.set(msgRef, {
+        'sender_id': uid,
+        'text': '',
+        'image_url': downloadUrl,
+        'created_at': FieldValue.serverTimestamp(),
+        'status': 'sent',
+      });
+
+      final unread = Map<String, dynamic>.from(chatData['unread'] ?? {});
+      for (final p in participants) {
+        if (p == uid) {
+          unread[p] = 0;
+        } else {
+          final curr = unread[p] is int ? unread[p] as int : 0;
+          unread[p] = curr + 1;
+        }
+      }
+      txn.update(chatDoc, {
+        'last_message': '[Image]',
+        'last_updated': FieldValue.serverTimestamp(),
+        'unread': unread,
+      });
+    });
+  }
+
+  // 2c) Send a file message; upload to Storage then write message with file_url and metadata
+  static Future<void> sendMessageFile(String chatId, PlatformFile file) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      throw Exception('Not signed in');
+    }
+    final uid = user.uid;
+    final db = FirebaseFirestore.instance;
+    final chatDoc = db.collection(FS_COL_CHATS).doc(chatId);
+    final msgCol = chatDoc.collection(FS_COL_CHAT_MESSAGES);
+
+    // Load file bytes (file_picker may provide bytes directly; otherwise read from path)
+    final bytes =
+        file.bytes ?? await File(file.path!).readAsBytes(); // path should exist on mobile/desktop
+
+    final msgRef = msgCol.doc();
+    final filename = file.name;
+    final storageRef = FirebaseStorage.instance
+        .ref()
+        .child('chats/$chatId/messages/${msgRef.id}/$filename');
+    await storageRef.putData(
+      bytes,
+      SettableMetadata(
+        // file_picker 10.3.x PlatformFile lacks mimeType; default to octet-stream.
+        contentType: 'application/octet-stream',
+      ),
+    );
+    final downloadUrl = await storageRef.getDownloadURL();
+
+    await db.runTransaction((txn) async {
+      final chatSnap = await txn.get(chatDoc);
+      if (!chatSnap.exists) {
+        throw Exception('Chat not found: $chatId');
+      }
+      final chatData =
+          (chatSnap.data() as Map<String, dynamic>?) ?? <String, dynamic>{};
+      final participants = List<String>.from(
+        chatData['participants'] ?? <String>[],
+      );
+
+      txn.set(msgRef, {
+        'sender_id': uid,
+        'text': '',
+        'file_url': downloadUrl,
+        'file_name': filename,
+        'file_size': file.size,
+        'created_at': FieldValue.serverTimestamp(),
+        'status': 'sent',
+      });
+
+      final unread = Map<String, dynamic>.from(chatData['unread'] ?? {});
+      for (final p in participants) {
+        if (p == uid) {
+          unread[p] = 0;
+        } else {
+          final curr = unread[p] is int ? unread[p] as int : 0;
+          unread[p] = curr + 1;
+        }
+      }
+      txn.update(chatDoc, {
+        'last_message': '[File] $filename',
         'last_updated': FieldValue.serverTimestamp(),
         'unread': unread,
       });
