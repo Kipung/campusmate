@@ -27,6 +27,7 @@ dependencies:
   flutter_secure_storage: ^9.2.4
   queue: ^3.4.0
   kalender: ^0.14.2
+  file_picker: ^10.3.7
 
   
 
