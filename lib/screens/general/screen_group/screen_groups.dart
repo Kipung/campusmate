@@ -26,7 +26,7 @@ import 'package:campusmate/models/groups.dart';
 import 'package:campusmate/constants/group_filters.dart';
 import 'package:campusmate/screens/general/screen_group/group_detail.dart';
 
-// Go
+import 'package:go_router/go_router.dart';
 
 //////////////////////////////////////////////////////////////////////////
 // StateFUL widget which manages state. Simply initializes the state object.
@@ -178,12 +178,8 @@ class _ScreenGroupsState extends ConsumerState<ScreenGroups> {
                     )
                   : null,
               onTap: () {
-                // TODO: navigate to group detail
-                Navigator.pushNamed(
-                  context,
-                  ScreenGroupsDetail.routeName,
-                  arguments: {'group': group},
-                );
+                // TODO: navigate to group detail screen
+                context.push(ScreenGroupsDetail.routeName, extra: group);
               },
             ),
           );
