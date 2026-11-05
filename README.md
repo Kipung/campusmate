@@ -1,4 +1,4 @@
-<picture><source media="(prefers-color-scheme: dark)" srcset=".github/banner-dark.svg"><img src=".github/banner-light.svg" width="100%" alt="CampusMate"></picture>
+<picture><source media="(max-width: 640px) and (prefers-color-scheme: dark)" srcset=".github/banner-m-dark.svg"><source media="(max-width: 640px)" srcset=".github/banner-m-light.svg"><source media="(prefers-color-scheme: dark)" srcset=".github/banner-dark.svg"><img src=".github/banner-light.svg" width="100%" alt="CampusMate"></picture>
 
 A mobile app that helps college students connect, form study groups, and communicate — all in one place.
 
